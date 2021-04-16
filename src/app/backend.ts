@@ -1,0 +1,340 @@
+import { Observable, ReplaySubject, Subject } from "rxjs";
+import { BackEndStatus, Dependencies, FrontEndStatus, Status } from "./local/utils";
+
+export function createObservableFromFetch( request, extractFct = (d) =>d ){
+
+    return new Observable(observer => {
+        fetch(request)
+          .then(response => response.json()) // or text() or blob() etc.
+          .then(data => {
+            observer.next( extractFct(data));
+            observer.complete();
+          })
+          .catch(err => observer.error(err));
+    });
+}
+
+export class FrontsRouter{
+
+    static urlBase = '/admin/frontends'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+        if(FrontsRouter.webSocket$)
+            return FrontsRouter.webSocket$
+
+        FrontsRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}/admin/frontends/ws`);
+        ws.onmessage = (event) => {
+            FrontsRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return FrontsRouter.webSocket$
+    }
+
+    static status$() :  Observable<{status: Array<FrontEndStatus>}> {
+
+        let url = `${FrontsRouter.urlBase}/status`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request) as Observable<{status: Array<FrontEndStatus>}> 
+    } 
+
+    static start$(name:string) {
+
+        let url = `${FrontsRouter.urlBase}/${name}/start`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static stop$(name:string) {
+
+        let url = `${FrontsRouter.urlBase}/${name}/stop`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }    
+    
+    static skeletons$(){
+        let url = `${FrontsRouter.urlBase}/skeletons`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static createSkeleton$( pipeline_type: string, body){
+        let url = `${FrontsRouter.urlBase}/skeletons/${pipeline_type}`
+        let request = new Request(url, { method: 'POST',body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+}
+
+
+export class BacksRouter{
+
+    private static urlBase = '/admin/backends'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+
+        if(BacksRouter.webSocket$)
+            return BacksRouter.webSocket$
+
+            BacksRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}${BacksRouter.urlBase}/ws`);
+        ws.onmessage = (event) => {
+            BacksRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return BacksRouter.webSocket$
+    }
+
+    static status$() :  Observable<{status: Array<BackEndStatus>}>{
+
+        let url = `${BacksRouter.urlBase}/status`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request) as Observable<{status: Array<BackEndStatus>}>
+    } 
+
+    static start$(name:string = undefined) {
+
+        let url = name ? `${BacksRouter.urlBase}/${name}/start` : `${BacksRouter.urlBase}/start`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static restart$() {
+
+        let url = `${BacksRouter.urlBase}/restart`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static stop$(name:string) {
+
+        let url = `${BacksRouter.urlBase}/${name}/stop`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }   
+    
+    static skeletons$(){
+        let url = `${BacksRouter.urlBase}/skeletons`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static createSkeleton$( pipeline_type: string, body){
+        let url = `${BacksRouter.urlBase}/skeletons/${pipeline_type}`
+        let request = new Request(url, { method: 'POST',body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static install$( name: string){
+
+        let url = `${BacksRouter.urlBase}/${name}/install`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+}
+
+
+export class PackagesRouter{
+
+    private static urlBase = '/admin/packages'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+
+        if(PackagesRouter.webSocket$)
+            return PackagesRouter.webSocket$
+
+            PackagesRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}${PackagesRouter.urlBase}/ws`);
+        ws.onmessage = (event) => {
+            PackagesRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return PackagesRouter.webSocket$
+    }
+
+    
+    static status$() : Observable<{status: Array<Status>}> {
+
+        let url = `${PackagesRouter.urlBase}/status`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request) as Observable<{status: Array<Status>}>
+    } 
+
+    static action$(body) {
+        let url = `${PackagesRouter.urlBase}/action`   
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static dependencies$(target: string) : Observable<Dependencies> {
+        let url = `${PackagesRouter.urlBase}/${target}/dependencies`   
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request) as Observable<Dependencies>
+    }    
+
+    static watch$(body){
+        let url = `${PackagesRouter.urlBase}/watch`
+        let request = new Request(url, { method: 'POST',body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static skeletons$(){
+        let url = `${PackagesRouter.urlBase}/skeletons`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static createSkeleton$( pipeline_type: string, body){
+        let url = `${PackagesRouter.urlBase}/skeletons/${pipeline_type}`
+        let request = new Request(url, { method: 'POST',body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static install$( name: string){
+
+        let url = `${PackagesRouter.urlBase}/${name}/install`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+}
+
+
+export class EnvironmentRouter{
+
+    private static urlBase = '/admin/environment'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+
+        if(EnvironmentRouter.webSocket$)
+            return EnvironmentRouter.webSocket$
+
+        EnvironmentRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}${EnvironmentRouter.urlBase}/ws`);
+        ws.onmessage = (event) => {
+            EnvironmentRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return EnvironmentRouter.webSocket$
+    }
+
+
+    static status$() {
+
+        let url = `${EnvironmentRouter.urlBase}/status`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static fileContent$() {
+
+        let url = `${EnvironmentRouter.urlBase}/file-content`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static switchConfiguration$(body){
+
+        let url = `${EnvironmentRouter.urlBase}/switch-configuration`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static syncUser$(body){
+
+        let url = `${EnvironmentRouter.urlBase}/sync-user`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static login$(body){
+
+        let url = `${EnvironmentRouter.urlBase}/login`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static postConfigParameters$( body){
+
+        let url = `${EnvironmentRouter.urlBase}/configuration/parameters`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+}
+
+export class AssetsPackageRouter{
+
+    private static urlBase = '/admin/assets/packages'
+
+    static status$() {
+
+        let url = `${AssetsPackageRouter.urlBase}/status`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static path$(treeId: string) {
+
+        let url = `${AssetsPackageRouter.urlBase}/${treeId}/path`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
+    static publishLibraryVersion$(libraryName: string, version: string) {
+
+        let url = `${AssetsPackageRouter.urlBase}/${libraryName}/${version}`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static syncPackage$(libraryName: string) {
+
+        let url = `${AssetsPackageRouter.urlBase}/${libraryName}`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
+    static syncPackages$( body ) {
+
+        let url = `${AssetsPackageRouter.urlBase}`
+        let request = new Request(url, { method: 'POST', body:JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+}
+
+export class AssetsRouter{
+
+    private static urlBase = '/admin/assets'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+
+        if(AssetsRouter.webSocket$)
+            return AssetsRouter.webSocket$
+
+        AssetsRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}${AssetsRouter.urlBase}/ws`);
+        ws.onmessage = (event) => {
+            AssetsRouter.webSocket$.next(JSON.parse(event.data))
+        };  
+        return AssetsRouter.webSocket$
+    }
+
+    static packages = AssetsPackageRouter
+}
+
+export class Backend {
+
+    static urlBase = '/admin'
+
+    static headers : {[key:string]: string}= {}
+
+    static setHeaders(headers: {[key:string]:string}){
+        Backend.headers=headers
+    }
+
+    static fronts = FrontsRouter 
+    static backs = BacksRouter 
+    static modules = PackagesRouter 
+    static environment = EnvironmentRouter
+    static assets = AssetsRouter
+}
