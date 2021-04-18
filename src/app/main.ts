@@ -26,6 +26,8 @@ await cdn.fetchBundles(
 )
 await cdn.fetchJavascriptAddOn([
     "codemirror#5.52.0~codemirror.min.js",
+])
+await cdn.fetchJavascriptAddOn([
     "codemirror#5.52.0~mode/python.min.js"
 ])
 await import('./on-load')
