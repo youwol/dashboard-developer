@@ -11,7 +11,7 @@ import { newSkeletonModalView, SkeletonResponse } from "./skeletons-modal.view";
 
 export class ModulesState {
 
-    status$ = new ReplaySubject<any>(1)
+    static status$ = new ReplaySubject<any>(1)
     highlighted$ = new ReplaySubject<Array<string>>(1)
 
     webSocket$: ReplaySubject<any>
@@ -29,7 +29,7 @@ export class ModulesState {
             })
         )
         .subscribe(s => {
-            this.status$.next(s)
+            ModulesState.status$.next(s)
         })
         this.dependenciesRequest$.pipe(
             debounceTime(250),
@@ -76,14 +76,14 @@ export class ModulesView implements VirtualDOM {
                 tag: 'h3', class: 'd-flex',
                 children: [
                     child$(
-                        this.state.status$,
+                        ModulesState.status$,
                         () => ({ children: [this.syncAllBttn(), this.newPackageBttn()] } as VirtualDOM),
                         { untilFirst: { class: 'px-2 fas fa-spinner fa-spin' } }
                     )
                 ]
             },
             child$(
-                state.status$.pipe(map(resp => resp.status)),
+                ModulesState.status$.pipe(map(resp => resp.status)),
                 (data) => this.contentView(data)),
             new LogsView(logsState)
         ]
@@ -100,7 +100,7 @@ export class ModulesView implements VirtualDOM {
         btn.state.click$.pipe(
             mergeMap(() => Backend.modules.action$({ action: 'SYNC', targetName: '', scope: 'ALL' }))
         ).subscribe((d) => {
-            this.state.status$.next(d)
+            ModulesState.status$.next(d)
         })
         return btn
     }
