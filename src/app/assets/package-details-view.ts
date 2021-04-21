@@ -13,8 +13,8 @@ export function detailsView( library: Library,  libraryStatus$ : Observable<Libr
         class: attr$(
             libraryStatus$,
             ({status}) => statusColorsDict[status],
-            {   untilFirst: 'h-100 d-flex flex-column fv-bg-background p-3',
-                wrapper: (d) => d +  ' h-100 d-flex flex-column fv-bg-background p-3'
+            {   untilFirst: 'h-100 d-flex flex-column fv-bg-background p-3 overflow-auto',
+                wrapper: (d) => d +  ' h-100 d-flex flex-column fv-bg-background p-3  overflow-auto'
             }
         ),
         style:{'border-width':'3px'},
@@ -83,7 +83,7 @@ function explorerStatus(library: Library) : VirtualDOM {
                 children: library.treeItems.map( item => ({                    
                     children:[
                         child$(
-                            Backend.assets.packages.path$(item.itemId),
+                            Backend.uploadPackages.path$(item.itemId),
                             (pathResponse) => explorerCard(pathResponse)
                         )
                     ]
@@ -238,7 +238,7 @@ function publishPackageVersionBttn( library: Library, version: string) : Virtual
                 tag:'i',
                 class: 'fas fa-cloud-upload-alt fv-hover-text-focus p-2 fv-pointer',
                 onclick: () => 
-                    Backend.assets.packages.publishLibraryVersion$(library.assetId, version).subscribe()
+                    Backend.uploadPackages.publishLibraryVersion$(library.assetId, version).subscribe()
             },
             {}
         ]
@@ -250,7 +250,7 @@ function syncBttn( assetId: string ) : VirtualDOM  {
 
     let btn = button('fas fa-sync', 'Sync.')
     btn.state.click$.subscribe( (d) => {
-        Backend.assets.packages.syncPackage$(assetId).subscribe()
+        Backend.uploadPackages.syncPackage$(assetId).subscribe()
     })
     return btn
 }

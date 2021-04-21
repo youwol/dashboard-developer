@@ -36,7 +36,7 @@ function syncAllBttn(syncQueued$: BehaviorSubject<Set<string>>) : VirtualDOM  {
     let btn = button('fas fa-sync', 'Sync. all')
     btn.state.click$.subscribe( (d) => {
         let body = { assetIds: Array.from(syncQueued$.getValue()) }
-        Backend.assets.packages.syncPackages$(body).subscribe()
+        Backend.uploadPackages.syncPackages$(body).subscribe()
     })
     return btn
 }

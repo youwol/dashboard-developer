@@ -58,9 +58,8 @@ export class SideBarView implements VirtualDOM{
             sectionGeneric(
                 'Upload assets',
                 'fas fa-cloud-upload-alt my-2',
-                [/*PanelId.AssetsUploadPackages,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
-                this.selected$,
-                false
+                [PanelId.AssetsUploadPackages/*,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
+                this.selected$
             ),
             sectionGeneric(
                 'Download assets',

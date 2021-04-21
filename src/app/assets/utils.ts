@@ -37,6 +37,7 @@ export interface LibraryStatus{
 
     assetId: string
     status: StatusEnum
+    libraryName: string
     details: { [key:string]: any }
 }
 

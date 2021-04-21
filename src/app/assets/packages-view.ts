@@ -1,16 +1,20 @@
-import { Backend } from "../backend";
-import { BehaviorSubject, ReplaySubject } from "rxjs";
+import { Backend, PackagesRouter } from "../backend";
+import { BehaviorSubject, combineLatest, merge, ReplaySubject } from "rxjs";
 import { VirtualDOM, child$, attr$} from '@youwol/flux-view'
 import { Library, LibraryStatus, StatusEnum } from "./utils";
 import { detailsView } from "./package-details-view";
 import { publishView } from "./package-publish-view";
 import { tableView } from "./packages-status-view";
+import { LogsState, LogsView } from "../logs-view";
+import { filter, map, tap } from "rxjs/operators";
+import { ModulesState } from "../local/modules-view";
 
 
 export class PackagesState{
 
 
-    webSocket$ : ReplaySubject<any>
+    static webSocket$: ReplaySubject<any> = Backend.uploadPackages.connectWs()
+
     libraries$ = new BehaviorSubject<Array<Library>>([])
 
     librariesStatus$ : { [key:string]: ReplaySubject<LibraryStatus> } = {}  
@@ -18,11 +22,25 @@ export class PackagesState{
     syncQueued$ = new BehaviorSubject<Set<string>>(new Set())
 
     constructor(){
-
-        /*this.webSocket$ = Backend.assets.connectWs() 
-        this.webSocket$.subscribe( ({assetId, libraryName, status, details }) => {
-
-            this.librariesStatus$[assetId].next({assetId, status, details})
+        PackagesState.webSocket$.subscribe( (d) => { 
+            console.log("got message", d)
+        })
+        /*ModulesState.status$.subscribe( status => {
+            console.log(status)
+        })*/
+        let init$ = ModulesState.status$.pipe(
+            tap( status => {
+                status.status.forEach( mdle => {
+                    this.librariesStatus$[mdle.assetId] = new ReplaySubject<LibraryStatus>()
+                    this.releasesStatus$[mdle.assetId] = {}
+                })
+            })
+        )
+        combineLatest([init$, PackagesState.webSocket$.pipe( filter( m => m.assetId && m.status && m.details) ) ])
+        .subscribe( ([all_status, message] : [status: any, message: LibraryStatus]) => {
+            console.log(all_status, message)
+            let {assetId, status, details} = message
+            this.librariesStatus$[assetId].next(message)
 
             if( status == StatusEnum.NOT_FOUND ){
                          
@@ -55,12 +73,12 @@ export class PackagesState{
             }
             if( status == StatusEnum.PROCESSING && details && details.version)
                 this.releasesStatus$[assetId][details.version].next(StatusEnum.PROCESSING)
-        })*/
+        })
     }
     
     getLibrarie$(){
 
-        Backend.assets.packages.status$().subscribe( ({libraries}:{libraries:Array<Library>}) => {
+        Backend.uploadPackages.status$().subscribe( ({libraries}:{libraries:Array<Library>}) => {
             let syncNeeded = this.syncQueued$.getValue()
             libraries.forEach( (asset: Library) => {
                 this.librariesStatus$[asset.assetId] = new ReplaySubject() 
@@ -94,12 +112,24 @@ export class PackagesView implements VirtualDOM{
     constructor( state : PackagesState ){
         
         this.state = state
-
-        this.children = [
-            child$(
-                this.state.getLibrarie$(),
-                (libraries) => this.contentView(libraries)
+        
+        let logsState = new LogsState(
+            PackagesState.webSocket$.pipe(
+                map((message) => message)
             )
+        )
+        
+        this.children = [
+            {
+                class: "h-75 d-flex flex-column",
+                children:[
+                    child$(
+                        this.state.getLibrarie$(),
+                        (libraries) => this.contentView(libraries)
+                    ),
+                ]
+            },
+            new LogsView(logsState)
         ]
         this.connectedCallback = (elem) => {
         }

@@ -261,46 +261,60 @@ export class EnvironmentRouter{
     }
 }
 
-export class AssetsPackageRouter{
+export class UploadPackagesRouter{
 
-    private static urlBase = '/admin/assets/packages'
+    private static urlBase = '/admin/upload/packages'
+    private static webSocket$ : ReplaySubject<any> 
+
+    static connectWs(){
+
+        if(UploadPackagesRouter.webSocket$)
+            return UploadPackagesRouter.webSocket$
+
+            UploadPackagesRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}${UploadPackagesRouter.urlBase}/ws`);
+        ws.onmessage = (event) => {
+            UploadPackagesRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return UploadPackagesRouter.webSocket$
+    }
 
     static status$() {
 
-        let url = `${AssetsPackageRouter.urlBase}/status`
+        let url = `${UploadPackagesRouter.urlBase}/status`
         let request = new Request(url, { method: 'GET', headers: Backend.headers })
         return createObservableFromFetch(request)
     } 
 
     static path$(treeId: string) {
 
-        let url = `${AssetsPackageRouter.urlBase}/${treeId}/path`
+        let url = `${UploadPackagesRouter.urlBase}/${treeId}/path`
         let request = new Request(url, { method: 'GET', headers: Backend.headers })
         return createObservableFromFetch(request)
     } 
 
     static publishLibraryVersion$(libraryName: string, version: string) {
 
-        let url = `${AssetsPackageRouter.urlBase}/${libraryName}/${version}`
+        let url = `${UploadPackagesRouter.urlBase}/${libraryName}/${version}`
         let request = new Request(url, { method: 'POST', headers: Backend.headers })
         return createObservableFromFetch(request)
     }
 
     static syncPackage$(libraryName: string) {
 
-        let url = `${AssetsPackageRouter.urlBase}/${libraryName}`
+        let url = `${UploadPackagesRouter.urlBase}/${libraryName}`
         let request = new Request(url, { method: 'POST', headers: Backend.headers })
         return createObservableFromFetch(request)
     }
 
     static syncPackages$( body ) {
 
-        let url = `${AssetsPackageRouter.urlBase}`
+        let url = `${UploadPackagesRouter.urlBase}/synchronize`
         let request = new Request(url, { method: 'POST', body:JSON.stringify(body), headers: Backend.headers })
         return createObservableFromFetch(request)
     }
 }
-
+/*
 export class AssetsRouter{
 
     private static urlBase = '/admin/assets'
@@ -321,7 +335,7 @@ export class AssetsRouter{
 
     static packages = AssetsPackageRouter
 }
-
+*/
 export class Backend {
 
     static urlBase = '/admin'
@@ -336,5 +350,5 @@ export class Backend {
     static backs = BacksRouter 
     static modules = PackagesRouter 
     static environment = EnvironmentRouter
-    static assets = AssetsRouter
+    static uploadPackages = UploadPackagesRouter
 }
