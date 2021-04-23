@@ -11,15 +11,16 @@ await cdn.fetchStyleSheets([
 ])
 
 await cdn.fetchBundles(
-    { d3:'5.15.0',
-    lodash:'4.17.15',
-    '@youwol/flux-view':'0.0.6',
-    "@youwol/fv-group":"0.0.3",
-    "@youwol/fv-input":"0.0.2",
-    "@youwol/fv-button":"0.0.3",
-    "@youwol/fv-tree":"0.0.3",
-    "@youwol/fv-tabs":"0.0.2",
-    rxjs: '6.5.5',
+    { 
+        d3:'5.15.0',
+        lodash:'4.17.15',
+        '@youwol/flux-view':'0.0.7',
+        "@youwol/fv-group":"0.0.3",
+        "@youwol/fv-input":"0.0.2",
+        "@youwol/fv-button":"0.0.3",
+        "@youwol/fv-tree":"0.0.3",
+        "@youwol/fv-tabs":"0.0.2",
+        rxjs: '6.5.5',
     }, 
     window
 )
