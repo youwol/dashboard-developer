@@ -1,5 +1,5 @@
 import { VirtualDOM } from "@youwol/flux-view"
-import { BehaviorSubject } from "rxjs"
+import { BehaviorSubject, Subscription } from "rxjs"
 import { ReplaySubject } from "rxjs/internal/ReplaySubject"
 import { filter, map, mergeMap, take } from "rxjs/operators"
 import { innerTabClasses } from "../utils-view"
@@ -28,7 +28,11 @@ export class GeneralState {
     static configurationPaths$ = new BehaviorSubject<Array<string>>(GeneralState.getCachedConfigurationPaths())
 
     constructor() {
-        GeneralState.webSocket$.pipe(
+    }
+    
+    static subscribe(): Subscription{
+
+        return GeneralState.webSocket$.pipe(
             take(1),
             mergeMap(() => Backend.environment.status$())
         ).subscribe((status: any) =>
@@ -42,7 +46,6 @@ export class GeneralState {
             .switchConfiguration$({ path })
             .subscribe()
     }
-
 
     static getCachedConfigurationPaths() {
         let cachedData = JSON.parse(
@@ -103,7 +106,7 @@ export class GeneralView implements VirtualDOM {
 
         this.connectedCallback = (elem) => {
             elem.subscriptions.push(
-                //Backend.modules.status$().subscribe( s => this.state.status$.next(s)) 
+                GeneralState.subscribe()
             )
         }
     }

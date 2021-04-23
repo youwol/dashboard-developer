@@ -18,9 +18,13 @@ export class ModulesState {
 
     autoWatched$ = new BehaviorSubject<Array<string>>([])
     dependenciesRequest$ = new Subject<{assetId:string, direction:string}>()
+
     constructor() {
         this.webSocket$ = Backend.modules.connectWs()
-        combineLatest([
+    }
+
+    subscribe(){
+        let s0 = combineLatest([
             this.webSocket$.pipe(take(1)),
             GeneralState.configurationUpdated$
         ]).pipe(
@@ -31,7 +35,7 @@ export class ModulesState {
         .subscribe(s => {
             ModulesState.status$.next(s)
         })
-        this.dependenciesRequest$.pipe(
+        let s1 = this.dependenciesRequest$.pipe(
             debounceTime(250),
             switchMap( ({assetId, direction}) => {
                 return Backend.modules.dependencies$(assetId).pipe( map( deps => ({deps, direction})))
@@ -42,6 +46,7 @@ export class ModulesState {
             ? this.highlighted$.next(deps.belowDependencies) 
             : this.highlighted$.next(deps.aboveDependencies) 
         })
+        return [s0,s1]
     }
 
     toggleWatch(libraryId) {
@@ -88,9 +93,7 @@ export class ModulesView implements VirtualDOM {
             new LogsView(logsState)
         ]
         this.connectedCallback = (elem) => {
-            elem.subscriptions.push(
-                //Backend.modules.status$().subscribe( s => this.state.status$.next(s)) 
-            )
+            elem.ownSubscriptions(...this.state.subscribe())
         }
     }
 

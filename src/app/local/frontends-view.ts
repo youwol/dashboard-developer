@@ -1,6 +1,6 @@
 import { Backend } from "../backend";
 import { combineLatest, ReplaySubject } from "rxjs";
-import { VirtualDOM, child$, } from '@youwol/flux-view'
+import { VirtualDOM, child$, HTMLElement$, } from '@youwol/flux-view'
 import { filter, mergeMap, take } from "rxjs/operators";
 import { button, innerTabClasses } from "../utils-view";
 import { LogsState, LogsView } from "../logs-view";
@@ -16,14 +16,17 @@ export class FrontendsState{
     webSocket$ : ReplaySubject<any>
 
     constructor(){
-        this.webSocket$ = Backend.fronts.connectWs() 
-        this.webSocket$.pipe(
+        this.webSocket$ = Backend.fronts.connectWs()        
+    }
+
+    subscribe(){
+        let s0 = this.webSocket$.pipe(
             filter( ({type}) => type=="Status")
             )
         .subscribe( ({status}) =>{
             this.status$.next(status)
         })
-        combineLatest([
+        let s1 = combineLatest([
             this.webSocket$.pipe(take(1)),
             GeneralState.configurationUpdated$
         ]).pipe(
@@ -33,8 +36,8 @@ export class FrontendsState{
         )
         .subscribe(s => {
             this.status$.next(s.status)
-        })
-        
+        })   
+        return [s0, s1]
     }
 }
 
@@ -66,11 +69,8 @@ export class FrontendsView implements VirtualDOM{
                 (status) => this.contentView(status)),
             new LogsView(logsState)
         ]
-        this.connectedCallback = (elem) => {
-            /*elem.subscriptions.push( 
-                Backend.fronts.status$().subscribe( (s: {status: Array<FrontEndStatus>}) =>
-                 this.state.status$.next(s)) 
-            )*/
+        this.connectedCallback = (elem: HTMLElement$) => {
+            elem.ownSubscriptions(...this.state.subscribe())
         }
     }
 

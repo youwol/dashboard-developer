@@ -1,6 +1,6 @@
 import { Backend, PackagesRouter } from "../backend";
 import { BehaviorSubject, combineLatest, merge, ReplaySubject } from "rxjs";
-import { VirtualDOM, child$, attr$} from '@youwol/flux-view'
+import { VirtualDOM, child$, attr$, HTMLElement$} from '@youwol/flux-view'
 import { Library, LibraryStatus, StatusEnum } from "./utils";
 import { detailsView } from "./package-details-view";
 import { publishView } from "./package-publish-view";
@@ -22,23 +22,33 @@ export class PackagesState{
     syncQueued$ = new BehaviorSubject<Set<string>>(new Set())
 
     constructor(){
-        PackagesState.webSocket$.subscribe( (d) => { 
-            console.log("got message", d)
-        })
-        /*ModulesState.status$.subscribe( status => {
-            console.log(status)
-        })*/
-        let init$ = ModulesState.status$.pipe(
-            tap( status => {
-                status.status.forEach( mdle => {
-                    this.librariesStatus$[mdle.assetId] = new ReplaySubject<LibraryStatus>()
-                    this.releasesStatus$[mdle.assetId] = {}
-                })
+    }
+
+    subscribe() {
+
+        let s1 = Backend.uploadPackages.status$().subscribe( ({libraries}:{libraries:Array<Library>}) => {
+            let syncNeeded = this.syncQueued$.getValue()
+            libraries.forEach( (asset: Library) => {
+                this.librariesStatus$[asset.assetId] = new ReplaySubject() 
+                this.releasesStatus$[asset.assetId] = {}
+                asset.treeItems.length >0 && syncNeeded.add(asset.assetId)
             })
-        )
-        combineLatest([init$, PackagesState.webSocket$.pipe( filter( m => m.assetId && m.status && m.details) ) ])
-        .subscribe( ([all_status, message] : [status: any, message: LibraryStatus]) => {
-            console.log(all_status, message)
+
+            libraries
+            .reduce( (acc,{assetId, releases}) => acc.concat(releases.map( ({version}) => ({ assetId, version }))), [])
+            .map( ({assetId,version}) => {
+                this.releasesStatus$[assetId][version] = new ReplaySubject()
+            })
+            this.libraries$.next(libraries)
+            this.syncQueued$.next(syncNeeded)
+        })
+
+        let s2 = combineLatest([
+            PackagesState.webSocket$.pipe( filter( m => m.assetId && m.status && m.details) ),
+            this.libraries$.pipe( filter( m => m.length > 0) )
+        ])
+        .subscribe( ([message, _ ]: [LibraryStatus, any]) => {
+            console.log(message)
             let {assetId, status, details} = message
             this.librariesStatus$[assetId].next(message)
 
@@ -74,27 +84,7 @@ export class PackagesState{
             if( status == StatusEnum.PROCESSING && details && details.version)
                 this.releasesStatus$[assetId][details.version].next(StatusEnum.PROCESSING)
         })
-    }
-    
-    getLibrarie$(){
-
-        Backend.uploadPackages.status$().subscribe( ({libraries}:{libraries:Array<Library>}) => {
-            let syncNeeded = this.syncQueued$.getValue()
-            libraries.forEach( (asset: Library) => {
-                this.librariesStatus$[asset.assetId] = new ReplaySubject() 
-                this.releasesStatus$[asset.assetId] = {}
-                asset.treeItems.length >0 && syncNeeded.add(asset.assetId)
-            })
-
-            libraries
-            .reduce( (acc,{assetId, releases}) => acc.concat(releases.map( ({version}) => ({ assetId, version }))), [])
-            .map( ({assetId,version}) => {
-                this.releasesStatus$[assetId][version] = new ReplaySubject()
-            })
-            this.libraries$.next(libraries)
-            this.syncQueued$.next(syncNeeded)
-        })
-        return this.libraries$
+        return [s1, s2]
     }
 }
 
@@ -124,14 +114,15 @@ export class PackagesView implements VirtualDOM{
                 class: "h-75 d-flex flex-column",
                 children:[
                     child$(
-                        this.state.getLibrarie$(),
+                        this.state.libraries$,
                         (libraries) => this.contentView(libraries)
                     ),
                 ]
             },
             new LogsView(logsState)
         ]
-        this.connectedCallback = (elem) => {
+        this.connectedCallback = (elem : HTMLElement$) => {
+            elem.ownSubscriptions(...this.state.subscribe())
         }
     }
 

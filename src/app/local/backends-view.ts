@@ -1,6 +1,6 @@
 import { Backend } from "../backend";
 import { BehaviorSubject, combineLatest, ReplaySubject, Subscription } from "rxjs";
-import { VirtualDOM, child$ } from '@youwol/flux-view'
+import { VirtualDOM, child$, HTMLElement$ } from '@youwol/flux-view'
 import { filter, map, mergeMap, take } from "rxjs/operators";
 import { button, innerTabClasses } from "../utils-view";
 import { LogsState, LogsView } from "../logs-view";
@@ -24,17 +24,19 @@ export class BackendsState{
 
     selectedUserId$ = new BehaviorSubject<string>( localStorage.getItem("user-name") || 'greinisch@youwol.com' )
 
-    subscriptions = new Array<Subscription>()
 
     constructor(){
         this.webSocket$ = Backend.backs.connectWs() 
-        this.webSocket$.pipe(
+    }
+
+    subscribe(){
+        let s0 = this.webSocket$.pipe(
             filter( ({type}) => type=="Status")
             )
         .subscribe( ({status}) =>{
             this.status$.next(status)
         })
-        combineLatest([
+        let s1 = combineLatest([
             this.webSocket$.pipe(take(1)),
             GeneralState.configurationUpdated$
         ]).pipe(
@@ -45,6 +47,7 @@ export class BackendsState{
         .subscribe(s => {
             this.status$.next(s.status)
         })
+        return [s0, s1]
     }
 }
 
@@ -86,8 +89,8 @@ export class BackendsView implements VirtualDOM{
             ),
             new LogsView(logsState)
         ]
-        this.connectedCallback = (elem) => {
-            elem.subscriptions = elem.subscriptions.concat(this.state.subscriptions)
+        this.connectedCallback = (elem: HTMLElement$) => {
+            elem.ownSubscriptions(...this.state.subscribe())
         }
     }
 

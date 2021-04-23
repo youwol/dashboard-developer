@@ -1,4 +1,4 @@
-import { child$, VirtualDOM } from "@youwol/flux-view"
+import { child$, HTMLElement$, VirtualDOM } from "@youwol/flux-view"
 import { Backend } from "../backend"
 import { LogsState, LogsView } from "../logs-view"
 import { descriptionView, innerTabClasses } from "../utils-view"
@@ -49,10 +49,7 @@ You can get arguments completion, type checkings, and more when editing this fil
             new LogsView(logsState)
         ]
 
-        this.connectedCallback = (elem) => {
-            elem.subscriptions.push(
-                //Backend.modules.status$().subscribe( s => this.state.status$.next(s)) 
-            )
+        this.connectedCallback = (elem: HTMLElement$) => {
         }
     }
 }
