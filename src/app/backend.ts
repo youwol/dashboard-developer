@@ -67,6 +67,25 @@ export class FrontsRouter{
 }
 
 
+export class SystemRouter{
+
+    static urlBase = '/admin/system'
+    private static webSocket$ : ReplaySubject<any> 
+    
+    static connectWs(){
+        if(SystemRouter.webSocket$)
+            return SystemRouter.webSocket$
+
+        SystemRouter.webSocket$ = new ReplaySubject()
+        var ws = new WebSocket(`ws://${window.location.host}/admin/system/ws`);
+        ws.onmessage = (event) => {
+            SystemRouter.webSocket$.next(JSON.parse(event.data))
+        };
+        return SystemRouter.webSocket$
+    }
+}
+
+
 export class BacksRouter{
 
     private static urlBase = '/admin/backends'
@@ -144,7 +163,7 @@ export class PackagesRouter{
         if(PackagesRouter.webSocket$)
             return PackagesRouter.webSocket$
 
-            PackagesRouter.webSocket$ = new ReplaySubject()
+        PackagesRouter.webSocket$ = new ReplaySubject()
         var ws = new WebSocket(`ws://${window.location.host}${PackagesRouter.urlBase}/ws`);
         ws.onmessage = (event) => {
             PackagesRouter.webSocket$.next(JSON.parse(event.data))
@@ -345,7 +364,8 @@ export class Backend {
     static setHeaders(headers: {[key:string]:string}){
         Backend.headers=headers
     }
-
+    
+    static system = SystemRouter
     static fronts = FrontsRouter 
     static backs = BacksRouter 
     static modules = PackagesRouter 

@@ -2,9 +2,10 @@ import { child$, render } from '@youwol/flux-view'
 import { LocalState, LocalView } from "./local/local-view";
 import { PanelId, SideBarView } from "./sidebar-view";
 import { AssetsState, AssetsView } from "./assets/assets-view";
-import { map } from 'rxjs/operators';
+import { filter, map, take } from 'rxjs/operators';
 import { ConfigurationState, ConfigurationView } from './environment/environment.view';
 import { Backend } from './backend';
+import { plugSystemErrors } from './system-errors.view';
 
 require('./style.css');
 
@@ -40,5 +41,17 @@ let vDOM = {
         )
     ]
 }
-                        
-document.body.appendChild(render(vDOM))
+
+let adminWS = Backend.system.connectWs()
+
+let systemErrors$ = adminWS.pipe(
+    filter(message => message.type=="SystemError")
+)
+
+plugSystemErrors( systemErrors$ )
+
+adminWS.pipe(take(1)).subscribe( message => {
+    console.log("Go!")
+    document.body.appendChild(render(vDOM))
+})
+
