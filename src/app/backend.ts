@@ -83,6 +83,14 @@ export class SystemRouter{
         };
         return SystemRouter.webSocket$
     }
+
+    static folderContent$(path: Array<string>) :  Observable<{status: Array<BackEndStatus>}>{
+
+        let url = `${SystemRouter.urlBase}/folder-content`
+        let body = {path}
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request) as Observable<{status: Array<BackEndStatus>}>
+    } 
 }
 
 

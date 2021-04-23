@@ -40,7 +40,7 @@ export class GeneralState {
         )
     }
 
-    static switchConfiguration(path) {
+    static switchConfiguration(path: Array<string>) {
 
         Backend.environment
             .switchConfiguration$({ path })
@@ -93,10 +93,7 @@ export class GeneralView implements VirtualDOM {
             {
                 class: 'flex-grow-1',
                 children: [
-                    configurationPickerView(
-                        GeneralState.environment$, 
-                        GeneralState.configurationPaths$ 
-                        ),
+                    configurationPickerView(GeneralState.environment$),
                     configParamsView(GeneralState.environment$),
                     userInfoView(GeneralState.environment$)
                 ]

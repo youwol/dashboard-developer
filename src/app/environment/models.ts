@@ -17,7 +17,7 @@ export interface ConfigurationParameters{
 }
 
 export interface Environment {
-    configurationPath: string,
+    configurationPath: Array<string>,
     configurationParameters: ConfigurationParameters
     userInfo:UserInfo
     users: Array<string>
