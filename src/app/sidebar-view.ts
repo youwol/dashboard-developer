@@ -1,6 +1,8 @@
 import { VirtualDOM, child$, attr$ } from '@youwol/flux-view'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 import { map } from 'rxjs/operators'
+import { GeneralState } from './environment/general.view'
+import { Environment } from './environment/models'
 
 
 export enum PanelId{
@@ -67,7 +69,8 @@ export class SideBarView implements VirtualDOM{
                 [/*PanelId.AssetsUploadPackages,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
                 this.selected$,
                 false
-            )
+            ),
+            sectionResources()
             ]
         }
        
@@ -143,5 +146,34 @@ function sectionGeneric(name: string, classes: string, targets: Array<PanelId>, 
             subSectionsList(targets, selected$)
         ],
         onclick:()=> selected$.next(targets[0])
+    }
+}
+
+function sectionResources(){
+
+    return {
+        class: 'my-2 ',
+        children:[
+            sectionTitle('Resources', 'fas fa-book', new BehaviorSubject(false)),
+            child$(
+                GeneralState.environment$,
+                (environment:Environment) => {
+                    return {
+                        tag:'ul',
+                        class:'d-flex flex-column',
+                        children: Object.entries(environment.configuration.general.resources).map( ([name,url]) => {
+                            return {
+                                tag:'li',
+                                children:[{
+                                    tag:'a',
+                                    href:url,
+                                    innerText:name
+                                }]
+                            }
+                        })
+                    }
+                }
+            )
+        ],
     }
 }
