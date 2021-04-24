@@ -46,9 +46,9 @@ export class ConfigurationView implements VirtualDOM{
 
     public readonly tag = 'div'
     public readonly children : Array<VirtualDOM> 
-    public readonly class = 'p-2 h-100 flex-grow-1'
+    public readonly class = 'p-2 h-100 flex-grow-1 w-25'
     public readonly state : ConfigurationState
-
+    
     constructor(state:ConfigurationState){
 
         let tabsData = [
