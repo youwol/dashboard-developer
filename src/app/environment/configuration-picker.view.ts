@@ -5,7 +5,7 @@ import { Environment } from "./models";
 
 
 
-export function configurationPickerView(environment$: Observable<Environment>){
+export function configurationPickerView(environment: Environment){
 
     return {
         class: 'flex-grow-1',
@@ -17,17 +17,11 @@ export function configurationPickerView(environment$: Observable<Environment>){
                         style: { 'font-size': 'large' },
                         innerText: 'configuration:'
                     },
-                    child$(
-                        environment$,
-                        (env) => configurationPathView(env) 
-                    ),
-                    child$( environment$,
-                        (environment) => {
-                            return {
-                                class:'fv-pointer mx-3 fas fa-folder-open border rounded p-2 fv-hover-bg-background-alt',
-                                onclick: () => popupFilesBrowserView(environment) 
-                            }
-                        })
+                    configurationPathView(environment),
+                    {
+                        class:'fv-pointer mx-3 fas fa-folder-open border rounded p-2 fv-hover-bg-background-alt',
+                        onclick: () => popupFilesBrowserView(environment) 
+                    }
                 ]
             }
         ]

@@ -1,5 +1,5 @@
-import { VirtualDOM } from "@youwol/flux-view"
-import { BehaviorSubject, Subscription } from "rxjs"
+import { child$, VirtualDOM } from "@youwol/flux-view"
+import { BehaviorSubject, Observable, Subscription } from "rxjs"
 import { ReplaySubject } from "rxjs/internal/ReplaySubject"
 import { filter, map, mergeMap, take } from "rxjs/operators"
 import { innerTabClasses } from "../utils-view"
@@ -8,6 +8,7 @@ import { LogsState, LogsView } from "../logs-view"
 import { configurationPickerView } from "./configuration-picker.view"
 import { userInfoView } from "./user-info.view"
 import { configParamsView } from "./config-parameters.view"
+import { Environment } from "./models"
 
 
 
@@ -15,7 +16,7 @@ export class GeneralState {
 
     static webSocket$: ReplaySubject<any> = Backend.environment.connectWs()
 
-    static environment$ = GeneralState.webSocket$.pipe(
+    static environment$ : Observable<Environment> = GeneralState.webSocket$.pipe(
         filter(message => message.type == "Environment")
     )
     static loadingStatus$ = GeneralState.webSocket$.pipe(
@@ -93,9 +94,18 @@ export class GeneralView implements VirtualDOM {
             {
                 class: 'flex-grow-1',
                 children: [
-                    configurationPickerView(GeneralState.environment$),
-                    configParamsView(GeneralState.environment$),
-                    userInfoView(GeneralState.environment$)
+                    child$(
+                        GeneralState.environment$,
+                        (env) => configurationPickerView(env)
+                    ),
+                    child$(
+                        GeneralState.environment$,
+                        (env) => configParamsView(env)
+                    ),
+                    child$(
+                        GeneralState.environment$,
+                        (env) => userInfoView(env)
+                    ),
                 ]
             },
             new LogsView(logsState)

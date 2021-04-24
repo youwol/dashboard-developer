@@ -10,7 +10,7 @@ import { Environment, FormalParameter } from "./models";
 
 class State extends ExpandableGroup.State {
 
-    constructor(public readonly environment$ : Observable<Environment>
+    constructor(public readonly environment : Environment
         ) {
         super("User info")
     }
@@ -42,7 +42,7 @@ function headerView(state: State): VirtualDOM {
     }
 }
 
-export function configParamsView(environment$: Observable<Environment>) {
+export function configParamsView(environment: Environment) {
 
     let contentView = (state: State) => ({
         class: "border rounded fv-color-primary p-2",
@@ -52,15 +52,12 @@ export function configParamsView(environment$: Observable<Environment>) {
                 Refer to the configuration file for more information on the meaning of these parameters.
                 `
             }),
-            child$(
-                environment$,
-                (environment: Environment) => parametersView(environment.configurationParameters.parameters)
-            )
+            parametersView(environment.configurationParameters.parameters)
         ]
     })
     return new ExpandableGroup.View(
         {
-            state: new State(environment$),
+            state: new State(environment),
             headerView,
             contentView,
             className: 'my-2'

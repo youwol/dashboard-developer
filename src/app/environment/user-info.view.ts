@@ -10,7 +10,7 @@ import { Environment } from "./models";
 
 class State extends ExpandableGroup.State {
 
-    constructor(public readonly environment$ : Observable<Environment>
+    constructor(public readonly environment : Environment
         ) {
         super("User info")
     }
@@ -42,10 +42,7 @@ function headerView(state: State): VirtualDOM {
                 class: 'fv-text-focus px-2',
                 children: [
                     {
-                        innerText: attr$( 
-                            state.environment$,
-                            (environment) => `Logged as ${environment.userInfo.name}`
-                        )
+                        innerText: `Logged as ${state.environment.userInfo.name}`
                     }
                 ]
             }
@@ -53,17 +50,13 @@ function headerView(state: State): VirtualDOM {
     }
 }
 
-export function userInfoView(environment$: Observable<Environment>) {
+export function userInfoView(environment: Environment) {
 
-    let items$ = environment$.pipe(
-        map( environment => environment.users.map(user => new Select.ItemData(user, user)) ) 
-    )
-    let selected$ = new BehaviorSubject("anonymous")
-    environment$.subscribe( env => {
-        selected$.next(env.userInfo.name) 
-    })
+    let items = environment.users.map(user => new Select.ItemData(user, user)) 
     
-    let selectState = new Select.State(items$, selected$ )
+    let selected$ = new BehaviorSubject(environment.userInfo.email)    
+    
+    let selectState = new Select.State(items, selected$ )
     selectState.selectionId$.pipe(
         skip(1),
         distinctUntilChanged(),
@@ -97,25 +90,20 @@ export function userInfoView(environment$: Observable<Environment>) {
             },
             {
                 children: [
-                    child$(
-                        state.environment$,
-                        (environment) => {
-                            return {   
-                                tag:'ul',
-                                innerText: 'Member of:',
-                                children: environment.userInfo.memberOf.map(grp => {
-                                    return { tag: 'li', class: '', innerText: grp }
-                                })
-                            }
-                        }
-                    )
+                    {   
+                        tag:'ul',
+                        innerText: 'Member of:',
+                        children: environment.userInfo.memberOf.map(grp => {
+                            return { tag: 'li', class: '', innerText: grp }
+                        }) 
+                    }
                 ]
             }
         ]
     })
     return new ExpandableGroup.View(
         {
-            state: new State(environment$),
+            state: new State(environment),
             headerView,
             contentView,
             className: 'my-2'
