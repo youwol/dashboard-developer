@@ -30,47 +30,55 @@ let tabsDisplayInfo = {
 export class SideBarView implements VirtualDOM{
 
     public readonly tag = 'div'
-    public readonly class = "d-flex justify-content-center py-5 px-2 border h-100"
+    public readonly class = "d-flex justify-content-center py-5 px-2 border h-100 "
     public readonly style = { 'min-width':'300px'}
     public readonly selected$ = new BehaviorSubject<PanelId>(PanelId.ConfigurationGeneral)
 
 
     public readonly children = [
         {
-            class:"h-100 mx-auto d-flex flex-column",
-            children:[ {
-                tag:'a',
-                class: 'fas fa-home mb-5',
-                href:'/ui/workspace-explorer',
-                innerText:'Explorer',
-                style:{'font-size': 'xx-large'}
-            },
-            sectionGeneric(
-                'Environment',
-                'fas fa-users-cog my-2',
-                [PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile],
-                this.selected$
-            ),
-            sectionGeneric(
-                'My computer',
-                'fas fa-laptop-code my-2',
-                [PanelId.LocalEnvPackage,PanelId.LocalEnvFronts,PanelId.LocalEnvBacks],
-                this.selected$
-            ),
-            sectionGeneric(
-                'Upload assets',
-                'fas fa-cloud-upload-alt my-2',
-                [PanelId.AssetsUploadPackages/*,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
-                this.selected$
-            ),
-            sectionGeneric(
-                'Download assets',
-                'fas fa-cloud-download-alt my-2',
-                [/*PanelId.AssetsUploadPackages,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
-                this.selected$,
-                false
-            ),
-            sectionResources()
+            class:"h-100 mx-auto d-flex flex-column pl-3",
+            children:[ 
+                {
+                    tag:'a',
+                    href:'/ui/workspace-explorer',
+                    class:'w-100 mb-5',
+                    children:[
+                        {
+                            tag: 'img',
+                            class:'mx-auto text-center fv-pointer',
+                            style:{width:"75%"},
+                            href:'/ui/workspace-explorer',
+                            src:'/api/assets-gateway/raw/package/QHlvdXdvbC9mbHV4LXlvdXdvbC1lc3NlbnRpYWxz/latest/assets/images/logo_YouWol_Platform_white.png'
+                        },
+                    ]
+                },
+                sectionGeneric(
+                    'Environment',
+                    'fas fa-users-cog my-2',
+                    [PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile],
+                    this.selected$
+                ),
+                sectionGeneric(
+                    'My computer',
+                    'fas fa-laptop-code my-2',
+                    [PanelId.LocalEnvPackage,PanelId.LocalEnvFronts,PanelId.LocalEnvBacks],
+                    this.selected$
+                ),
+                sectionGeneric(
+                    'Upload assets',
+                    'fas fa-cloud-upload-alt my-2',
+                    [PanelId.AssetsUploadPackages/*,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
+                    this.selected$
+                ),
+                sectionGeneric(
+                    'Download assets',
+                    'fas fa-cloud-download-alt my-2',
+                    [/*PanelId.AssetsUploadPackages,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
+                    this.selected$,
+                    false
+                ),
+                sectionResources()
             ]
         }
        
