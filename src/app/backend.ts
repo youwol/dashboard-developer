@@ -280,6 +280,13 @@ export class EnvironmentRouter{
         return createObservableFromFetch(request)
     }
 
+    static selectRemoteGateway$(body:{name:string}){
+
+        let url = `${EnvironmentRouter.urlBase}/select-remote-gateway`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
+
     static postConfigParameters$( body){
 
         let url = `${EnvironmentRouter.urlBase}/configuration/parameters`

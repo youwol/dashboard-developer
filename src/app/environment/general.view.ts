@@ -9,6 +9,7 @@ import { configurationPickerView } from "./configuration-picker.view"
 import { userInfoView } from "./user-info.view"
 import { configParamsView } from "./config-parameters.view"
 import { Environment } from "./models"
+import { remoteGatewayInfoView } from "./remote-gateway-info.view"
 
 
 
@@ -106,6 +107,10 @@ export class GeneralView implements VirtualDOM {
                         GeneralState.environment$,
                         (env) => userInfoView(env)
                     ),
+                    child$(
+                        GeneralState.environment$,
+                        (env) => remoteGatewayInfoView(env)
+                    )
                 ]
             },
             new LogsView(logsState)

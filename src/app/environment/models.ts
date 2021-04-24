@@ -16,6 +16,11 @@ export interface ConfigurationParameters{
     parameters: {[key:string]: FormalParameter}
 }
 
+export interface RemoteGateway{
+    name: string
+    host: string
+}
+
 export interface UserConfiguration{
 
     general: {
@@ -24,12 +29,20 @@ export interface UserConfiguration{
     }
 }
 
+export interface RemoteGatewayInfo{
+    name: string
+    host: string
+    connected: boolean | undefined
+}
+
 export interface Environment {
     configurationPath: Array<string>,
     configurationParameters: ConfigurationParameters
     userInfo:UserInfo
     users: Array<string>
     configuration: UserConfiguration
+    remoteGatewayInfo: RemoteGatewayInfo
+    remotesInfo: Array<RemoteGatewayInfo>
 }
 
 
