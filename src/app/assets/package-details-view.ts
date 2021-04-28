@@ -4,30 +4,51 @@ import { filter } from "rxjs/operators";
 import { button } from "../utils-view";
 import { Backend } from "../backend";
 import { Library, LibraryStatus, statusClassesDict, statusColorsDict, StatusEnum, statusInfoDict } from "./utils";
+import { LogsState, LogsView } from "../logs-view";
+import { PackagesState } from "./packages-view";
 
 
 
-export function detailsView( library: Library,  libraryStatus$ : Observable<LibraryStatus>) : VirtualDOM {
+export function detailsView( 
+    library: Library,  
+    packagesState : PackagesState
+    ) : VirtualDOM {
     
-    return {
-        class: attr$(
-            libraryStatus$,
-            ({status}) => statusColorsDict[status],
-            {   untilFirst: 'h-100 d-flex flex-column fv-bg-background p-3 overflow-auto',
-                wrapper: (d) => d +  ' h-100 d-flex flex-column fv-bg-background p-3  overflow-auto'
-            }
-        ),
-        style:{'border-width':'3px'},
+    let libraryStatus$ = packagesState.librariesStatus$[library.assetId]
+    
+    return { 
+        class: "h-100 d-flex flex-column w-100 fv-bg-background",
         children:[
-            title(library),
-            statusInfo(libraryStatus$),
             {
-                class:'d-flex flex-grow-1', style:{height:'0px'},
+                class: attr$(
+                    libraryStatus$,
+                    ({status}) => statusColorsDict[status],
+                    {   untilFirst: 'h-75 d-flex flex-column fv-bg-background p-3 overflow-auto',
+                        wrapper: (d) => d +  ' h-100 d-flex flex-column fv-bg-background p-3  overflow-auto'
+                    }
+                ),
+                style:{'border-width':'3px'},
                 children:[
-                    explorerStatus(library),
-                    versionsStatus(library, libraryStatus$)
-                ]
-            }
+                    title(library),
+                    statusInfo(libraryStatus$), 
+                    { innerText: attr$( 
+                        libraryStatus$,
+                        (s:LibraryStatus) => "assetStatus:" + s.assetStatus) 
+                    },
+                    { innerText: attr$( 
+                        libraryStatus$,
+                        (s:LibraryStatus) => "treeStatus:" + s.treeStatus) 
+                    },
+                    {
+                        class:'d-flex h-100',
+                        children:[
+                            explorerStatus(library),
+                            versionsStatus(library, packagesState)
+                        ]
+                    }
+                ]  
+            },
+            new LogsView(packagesState.logsState)
         ]
     }
 }
@@ -129,7 +150,7 @@ function explorerCard( {group, drive, folders} ) : VirtualDOM {
 }
 
 
-function versionsStatus( library: Library, libraryStatus$ : Observable<LibraryStatus> ) : VirtualDOM{
+function versionsStatus( library: Library, packagesState: PackagesState ) : VirtualDOM{
 
     return {   
         class:'h-100 w-50 d-flex flex-column', style:{height:'0px'},
@@ -137,7 +158,7 @@ function versionsStatus( library: Library, libraryStatus$ : Observable<LibrarySt
             {   tag:'h5' , innerText: 'Versions' },
             {   class:"flex-grow-1 overflow-auto",
                 children:[ 
-                    versionsTable(library, libraryStatus$) 
+                    versionsTable(library, packagesState) 
                 ] 
             }
         ]
@@ -145,7 +166,7 @@ function versionsStatus( library: Library, libraryStatus$ : Observable<LibrarySt
 }
 
 
-function versionsTable( library: Library, libraryStatus$ : Observable<LibraryStatus>) : VirtualDOM {
+function versionsTable( library: Library, packagesState: PackagesState) : VirtualDOM {
 
     return {
         tag: 'table', 
@@ -174,25 +195,9 @@ function versionsTable( library: Library, libraryStatus$ : Observable<LibrarySta
                                     {
                                         tag:'i',
                                         class: attr$(
-                                            libraryStatus$.pipe(filter( ({status}) => {
-                                                return [StatusEnum.NOT_FOUND,StatusEnum.MISMATCH,
-                                                    StatusEnum.SYNC].includes(status)
-                                            })),
-                                            ({status, details}) => {
-                                                if(status==StatusEnum.NOT_FOUND || status==StatusEnum.SYNC )
-                                                    return statusClassesDict[status]
-        
-                                                if( status==StatusEnum.MISMATCH &&
-                                                    details.missing.includes(release.version))
-                                                    return 'fv-text-error fas fa-times'
-        
-                                                if( status==StatusEnum.MISMATCH &&
-                                                    details.sync.includes(release.version))
-                                                    return 'fv-text-success fas fa-check'  
-
-                                                if( status==StatusEnum.MISMATCH &&
-                                                    details.mismatch.includes(release.version))
-                                                    return 'fv-text-focus fas fa-exclamation'  
+                                            packagesState.publishStatus$(library.assetId,release.version),
+                                            (status) => {
+                                                return statusClassesDict[status]
                                             },
                                             {   untilFirst: 'fas fa-spin fa-spinner',
                                                 wrapper: (d) => d + " px-2"
@@ -202,7 +207,7 @@ function versionsTable( library: Library, libraryStatus$ : Observable<LibrarySta
                                     {
                                         tag:'i',
                                         class: attr$(
-                                            libraryStatus$,
+                                            packagesState.librariesStatus$[library.assetId],
                                             ({status, details}) => {
                                                 if( !details || details.version != release.version )                                                    
                                                     return '' 
@@ -217,7 +222,7 @@ function versionsTable( library: Library, libraryStatus$ : Observable<LibrarySta
                                 ]
                             },
                             child$( 
-                                libraryStatus$,
+                                packagesState.librariesStatus$[library.assetId],
                                 () =>  publishPackageVersionBttn(library, release.version)
                             )
                         ]

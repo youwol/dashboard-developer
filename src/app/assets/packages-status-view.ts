@@ -1,23 +1,27 @@
 import { attr$, VirtualDOM } from "@youwol/flux-view"
-import { Observable, Subject } from "rxjs"
-import { Library, LibraryStatus, statusClassesDict } from "./utils"
+import { combineLatest, merge, Observable, Subject } from "rxjs"
+import { delay, filter, map } from "rxjs/operators"
+import { PackagesState } from "./packages-view"
+
+import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils"
 
 
 export function tableView(
     libraries: Array<Library>, 
     selected$ : Subject<Library>, 
-    librariesStatus$:  { [key:string]: Observable<LibraryStatus> }
+    state: PackagesState
     ): VirtualDOM {
 
+    let librariesStatus$ = state.librariesStatus$
+
     return {
-        class: 'h-100 w-50 d-flex flex-column fv-bg-background p-3',
+        class: 'h-100 d-flex flex-column',
         children: [
-            { tag: 'h4', innerText: 'Status', class: 'text-center' },
             {
-                class: 'flex-grow-1 overflow-auto mt-4',
+                class: 'overflow-auto fv-color-primary border',
                 children: [
                     {
-                        tag: 'table', class: 'fv-color-primary  w-100 text-center',
+                        tag: 'table', class: ' w-100 text-center',
                         children: [
                             {
                                 tag: 'thead',
@@ -25,30 +29,37 @@ export function tableView(
                                     {
                                         tag: 'tr', class: 'fv-bg-background-alt',
                                         children: [
-                                            { tag: 'td', innerText: 'Name' },
-                                            { tag: 'td', innerText: 'Status' },
-                                            { tag: 'td', innerText: 'Explorer references' },
+                                            { tag: 'td', innerText: 'Name' , class:'px-3'},
+                                            { tag: 'td', innerText: 'Status', class:'px-3'}
                                         ]
                                     }
                                 ]
                             },
                             {
                                 tag: 'tbody',
-                                children: libraries.map( d => {
+                                children: libraries.map( library => {
                                     return {
                                         tag: 'tr',
-                                        class: 'fv-pointer fv-hover-bg-background-alt',
+                                        class: attr$(
+                                            combineLatest([state.options$, librariesStatus$[library.assetId]]).pipe(
+                                                map( ([{showSynced}, libStatus]) => {
+                                                    if(showSynced)
+                                                        return true
+                                                    return libStatus.status == StatusEnum.SYNC
+                                                        ? false
+                                                        : true
+                                                })
+                                            ),
+                                            (display) => display ? '' : 'd-none',
+                                            { wrapper: (d) => d + ' fv-pointer fv-hover-bg-background-alt'}
+                                            ),
                                         children: [
                                             {
-                                                tag: 'td', innerText: d.libraryName
+                                                tag: 'td', innerText: library.libraryName, class:'px-3'
                                             },
-                                            statusCell( librariesStatus$[d.assetId] ),
-                                            { 
-                                                tag: 'td', 
-                                                innerText: d.treeItems.length 
-                                            }
+                                            statusCell( library, state  )
                                         ],
-                                        onclick: () => selected$.next(d)
+                                        onclick: () => selected$.next(library)
                                     }
                                 })
                             }
@@ -61,13 +72,20 @@ export function tableView(
     }
 }
 
-function statusCell( libraryStatus$ : Observable<LibraryStatus>) {
+function statusCell( library: Library, state: PackagesState ) {
 
+    let libraryStatus$ = state.librariesStatus$[library.assetId].pipe(map(({status}) => status))
+    let publishStatus$ =  merge(
+        ...library.releases.map( r => state.publishStatus$(library.assetId, r.version))
+    ).pipe(
+        filter( status =>  status == StatusEnum.PROCESSING )
+    ) 
+    publishStatus$.subscribe( p => console.log(p))
     return {
         tag: 'td',
         class: attr$(
-            libraryStatus$, //packagesStatus$[d.assetId],
-            ({status}) => statusClassesDict[status],
+            merge(libraryStatus$, publishStatus$) , //packagesStatus$[d.assetId],
+            (status) => statusClassesDict[status],
             { untilFirst: 'fas fa-spinner fa-spin' }
         )
     }

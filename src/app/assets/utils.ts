@@ -1,11 +1,11 @@
 
-
 export enum StatusEnum{
 
     NOT_FOUND = 'PackageStatus.NOT_FOUND',
     SYNC = 'PackageStatus.SYNC',
     MISMATCH = 'PackageStatus.MISMATCH',
     PROCESSING = 'PackageStatus.PROCESSING',
+    DONE = 'PackageStatus.DONE'
 }
 
 export interface TreeItem{
@@ -37,6 +37,9 @@ export interface LibraryStatus{
 
     assetId: string
     status: StatusEnum
+    cdnStatus: StatusEnum
+    treeStatus: StatusEnum
+    assetStatus: StatusEnum
     libraryName: string
     details: { [key:string]: any }
 }
@@ -50,7 +53,7 @@ export let statusColorsDict = {
 }
 
 export let statusClassesDict = {
-    'PackageStatus.NOT_FOUND': 'fas fa-times fv-text-error',
+    'PackageStatus.NOT_FOUND': 'far fa-circle fv-text-disabled',
     'PackageStatus.MISMATCH': 'fas fa-exclamation fv-text-focus',
     'PackageStatus.SYNC': 'fas fa-check fv-text-success',
     'PackageStatus.PROCESSING': 'fas fa-spinner fa-spin',

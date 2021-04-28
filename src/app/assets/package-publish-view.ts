@@ -1,58 +1,67 @@
-import { attr$, VirtualDOM } from "@youwol/flux-view";
-import { BehaviorSubject, Observable } from "rxjs";
-import { filter, mergeMap } from "rxjs/operators";
-import { Backend } from "../backend";
+import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
+import { combineLatest } from "rxjs";
+import { delay, map } from "rxjs/operators";
 import { button } from "../utils-view";
-import { Library, statusClassesDict, StatusEnum } from "./utils";
+import { PackagesState } from "./packages-view";
+import { Library,  statusClassesDict, StatusEnum } from "./utils";
 
 
 
 export function publishView(
     libraries: Array<Library>, 
-    releasesStatus$:{ [key:string]: { [key:string]: Observable<StatusEnum> } }, 
-    syncQueued$: BehaviorSubject<Set<string>>) : VirtualDOM {
+    state: PackagesState
+    ) : VirtualDOM {
     
     return {
-        class:'h-100 w-50 d-flex flex-column fv-bg-background p-3',
+        class:'d-flex flex-column border fv-color-primary',
+        style:{
+            height:'fit-content',
+            'max-height': '100%'
+        },
         children: [
+        {   class:"overflow-auto",
+            children:[ 
+                syncTable(libraries, state) 
+            ] 
+        },
         {   class: 'd-flex align-items-baseline',
             children:[
-                { 
-                    tag:'h4' , innerText: 'Tasks', class:'text-center px-2' 
-                },
-                syncAllBttn(syncQueued$)
+                child$( 
+                    state.syncQueued$, 
+                    (toSync) => syncHeader(toSync, state) 
+                )
             ]
         },
-        {   class:"h-100 flex-grow-1 overflow-auto mt-4",
-            children:[ 
-                syncTable(libraries, releasesStatus$, syncQueued$) 
-            ] 
-        }
     ]}
 }
 
-function syncAllBttn(syncQueued$: BehaviorSubject<Set<string>>) : VirtualDOM  {
+function syncHeader(selection: Set<string> , state: PackagesState) : VirtualDOM  {
 
-    let btn = button('fas fa-sync', 'Sync. all')
-    btn.state.click$.subscribe( (d) => {
-        let body = { assetIds: Array.from(syncQueued$.getValue()) }
-        Backend.uploadPackages.syncPackages$(body).subscribe()
-    })
-    return btn
+    let content = {}
+    if(selection.size==0)
+        content = { innerText: 'No items selected for synchronization' , class:'fv-text-focus'}
+    else{
+        let btn = button('fas fa-sync', `Sync. (${selection.size})`)
+        btn.state.click$.subscribe( (d) => state.synchronize())
+        content = btn
+    }
+    return {
+        class:'w-100',
+        children:[
+            { class:" border fv-color-primary" },
+            { 
+                class:'m-3',
+                children:[content]
+            }
+        ]   
+    }
 }
 
-let classesDict = {
-    [StatusEnum.NOT_FOUND]: 'far fa-clock fv-text-background-alt',
-    [StatusEnum.SYNC]: 'fas fa-check fv-text-success',
-    [StatusEnum.MISMATCH]: 'fas fa-exclamation fv-text-focus',
-    [StatusEnum.PROCESSING]: 'fas fa-spinner fa-spin',
-}
 
-//'far fa-clock fv-text-background-alt',
 export function syncTable( 
     libraries: Array<Library>, 
-    releasesStatus$:{ [key:string]: { [key:string]: Observable<StatusEnum> } },
-    syncQueued$: BehaviorSubject<Set<string>> ) : VirtualDOM {
+    state: PackagesState
+    ) : VirtualDOM {
 
     let flattenLibraries = libraries.reduce( (acc, library ) => { 
 
@@ -66,15 +75,16 @@ export function syncTable(
 
     return {
         tag: 'table', 
-        class:'fv-color-primary  w-100 text-center',
+        class:'w-100 text-center',
         children:[
             {   tag:'thead',
                 children:[
                     {   tag: 'tr', class:'fv-bg-background-alt',
                         children: [
-                            { tag: 'td', innerText:'Name'},
-                            { tag: 'td', innerText:'Version'},
-                            { tag: 'td', innerText:'Status'}
+                            { tag: 'td', innerText:'Name', class:'px-3'},
+                            { tag: 'td', innerText:'Version', class:'px-3'},
+                            { tag: 'td', innerText:'Status', class:'px-3'},
+                            { tag: 'td', innerText:'Queued?', class:'px-3'}
                         ] 
                     }
                 ]
@@ -83,32 +93,44 @@ export function syncTable(
                 children: flattenLibraries.map( ({assetId, libraryName, version}) => {
                     return {
                         tag: 'tr',
-                        class: 'fv-pointer fv-hover-bg-background-alt',
+                        class: attr$(
+                            combineLatest([state.options$, state.publishStatus$(assetId, version)])
+                            .pipe(
+                                map( ([{showSynced, showNext}, status]) => {
+                                    if(showSynced && showNext)
+                                        return true
+                                    if(!showSynced && status == StatusEnum.SYNC)
+                                        return false
+
+                                    if(!showNext && version.includes('-next'))
+                                        return false
+                                    return true
+                                })
+                                ),
+                            (display) => display ? '' : 'd-none',
+                            { wrapper: (d) => d + ' fv-pointer fv-hover-bg-background-alt'}
+                            ),
                         children: [
                             {   tag: 'td', innerText:libraryName },
                             {   tag: 'td', innerText:version },
                             {   tag: 'td',
                                 children:[
-                                    {   
+                                    {
                                         class: attr$(
-                                            releasesStatus$[assetId][version],
-                                            (status) => {
-                                                return statusClassesDict[status] 
-                                            }
+                                            state.publishStatus$(assetId, version),
+                                            (status) => statusClassesDict[status]
                                         )
                                     }
-                                    , {
-                                        class: attr$(
-                                            releasesStatus$[assetId][version].pipe(
-                                                filter( status => status != StatusEnum.SYNC),
-                                                mergeMap( () => syncQueued$)
-                                            ),
-                                            (assetIds: Set<string>) => {
-                                                return assetIds.has(assetId) ? 'far fa-clock pl-2' : ''
-                                            }
-                                        )
-                                    }
-                                ] 
+                                ]
+                            },
+                            {
+                                tag:'input',
+                                type:'checkbox',
+                                checked: attr$(
+                                    state.isToggled$(assetId, version),
+                                    (toggled) => toggled,
+                                ),
+                                onclick: ()=> state.toggleSync(assetId, version)
                             }
                         ]
                     }
@@ -117,4 +139,3 @@ export function syncTable(
         ]
     } 
 }
-

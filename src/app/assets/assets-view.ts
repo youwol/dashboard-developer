@@ -1,17 +1,12 @@
-import { VirtualDOM } from '@youwol/flux-view'
+import { HTMLElement$, VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
-import { Subject } from 'rxjs';
-import { PanelId } from '../sidebar-view';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { AppState } from '../app-state';
+import { PanelId } from '../panels-info';
+import { detailsView } from './package-details-view';
 import { PackagesState,PackagesView } from './packages-view';
+import { Library } from './utils';
 
-
-export class AssetsState{
-    
-    packagesState = new PackagesState()
-    
-    constructor(public readonly selectedPanel$: Subject<PanelId>){
-    }
-}
 
 class PackagesTabData extends Tabs.TabData{
 
@@ -24,25 +19,105 @@ class PackagesTabData extends Tabs.TabData{
     }
 }
 
+class PackageTabData extends Tabs.TabData{
+
+    constructor(
+        public readonly library: Library, 
+        public readonly packagesState: PackagesState){
+        super(library.libraryName, library.libraryName)
+    }
+
+    view() {
+        return detailsView( 
+            this.library,  
+            this.packagesState)
+    }
+}
+
+export class AssetsState{
+    
+    public readonly packagesState: PackagesState
+    
+    public readonly tabsData$ : BehaviorSubject< Tabs.TabData[]>
+
+    public readonly selectedTab$ = new BehaviorSubject("packages")
+
+    constructor(public readonly selectedPanel$: Subject<PanelId>, public readonly appState){
+
+        this.packagesState = new PackagesState(this)
+
+        this.tabsData$ = new BehaviorSubject< Tabs.TabData[]>([
+            new PackagesTabData(this.packagesState)
+        ])
+    }
+
+    addTabUpload( library: Library ) {
+
+        //this.appState.addTabUpload(name)
+        this.tabsData$.next( [ 
+            ...this.tabsData$.getValue(), 
+            new PackageTabData(library, this.packagesState) 
+        ])
+        this.selectedTab$.next(library.libraryName)
+    }
+    removeTabUpload( name ) {
+        this.selectedTab$.next(this.tabsData$.getValue()[0].id)
+        this.tabsData$.next(this.tabsData$.getValue().filter( (tab) => tab.name != name))
+    }
+}
+
+class AssetsTabsState extends Tabs.State{
+
+    constructor(public readonly assetsState: AssetsState){
+        super(assetsState.tabsData$, assetsState.selectedTab$)
+    }
+}
+
 export class AssetsView implements VirtualDOM{
 
     public readonly tag = 'div'
     public readonly children : Array<VirtualDOM> 
     public readonly class = 'p-2 h-100 flex-grow-1'
 
+    connectedCallback: (elem) => void
+    
     constructor(state:AssetsState){
-
-        let tabsData = [
-            new PackagesTabData(state.packagesState)
-        ]
         
+        let tabsState = new AssetsTabsState(state)
         this.children = [
             new Tabs.View({
                 class:'d-flex flex-column h-100', 
-                state: new Tabs.State(tabsData),
-                headerView: (state, tab) => ({innerText: tab.name, class:'px-2'}),
+                state: tabsState,
+                headerView: headerViewTab,
                 contentView: (tabState, tabData) => tabData.view() 
             } as any)
         ]
+
+        this.connectedCallback = (elem : HTMLElement$) => {
+            elem.ownSubscriptions(...state.packagesState.subscribe())
+        }
     }
+}
+
+
+function headerViewTab(state: AssetsTabsState, tab: Tabs.State) {
+
+    if(tab instanceof PackagesTabData)
+        return {innerText: tab.name, class:'px-2'}
+
+    if(tab instanceof PackageTabData)
+        return {
+            class: 'd-flex align-items-center px-2',
+            children:[
+                { 
+                    innerText: tab.name, class:'px-2'},
+                { 
+                    class: 'fas fa-times fv-pointer p-1 ',
+                    onclick: (ev: MouseEvent) => {
+                        state.assetsState.removeTabUpload(tab.name)
+                        ev.stopPropagation() 
+                    }
+                },
+            ] 
+        }
 }
