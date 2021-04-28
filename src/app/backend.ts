@@ -299,14 +299,14 @@ export class EnvironmentRouter{
 export class UploadPackagesRouter{
 
     private static urlBase = '/admin/upload/packages'
-    private static webSocket$ : ReplaySubject<any> 
+    private static webSocket$ : Subject<any> 
 
     static connectWs(){
 
         if(UploadPackagesRouter.webSocket$)
             return UploadPackagesRouter.webSocket$
 
-            UploadPackagesRouter.webSocket$ = new ReplaySubject()
+            UploadPackagesRouter.webSocket$ = new Subject()
         var ws = new WebSocket(`ws://${window.location.host}${UploadPackagesRouter.urlBase}/ws`);
         ws.onmessage = (event) => {
             UploadPackagesRouter.webSocket$.next(JSON.parse(event.data))
@@ -327,6 +327,14 @@ export class UploadPackagesRouter{
         let request = new Request(url, { method: 'GET', headers: Backend.headers })
         return createObservableFromFetch(request)
     } 
+
+    static remotePath$(treeId: string) {
+
+        let url = `${UploadPackagesRouter.urlBase}/${treeId}/remote-path`
+        let request = new Request(url, { method: 'GET', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    } 
+
 
     static publishLibraryVersion$(libraryName: string, version: string) {
 
