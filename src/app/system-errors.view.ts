@@ -37,9 +37,6 @@ function contentView(state: ModalState) {
                 class: 'text-center w-100 py-2 fv-text-error',
                 innerText: "System error"
             },
-            {   class: 'text-center w-100 py-2',
-                innerText: "An error occurred, most likely not related to your work"
-            },
             {
                 class: 'text-center w-100 py-2',
                 innerText: "Details: " + state.error.details
