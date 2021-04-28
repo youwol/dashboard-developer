@@ -2,9 +2,9 @@ import { HTMLElement$, VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
 import { BehaviorSubject, Subject } from 'rxjs';
 import { PanelId } from '../panels-info';
-import { detailsView } from './package-details-view';
-import { PackagesState,PackagesView } from './packages-view';
-import { Library } from './utils';
+import { detailsView } from './packages/package-details-view';
+import { PackagesState,PackagesView } from './packages/packages-view';
+import { Library } from './packages/utils';
 
 
 class PackagesTabData extends Tabs.TabData{

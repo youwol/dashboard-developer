@@ -1,10 +1,9 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
 import { Observable } from "rxjs";
-import { filter } from "rxjs/operators";
-import { button } from "../utils-view";
-import { Backend } from "../backend";
+import { button } from "../../utils-view";
+import { Backend } from "../../backend";
 import { Library, LibraryStatus, statusClassesDict, statusColorsDict, StatusEnum, statusInfoDict } from "./utils";
-import { LogsState, LogsView } from "../logs-view";
+import { LogsView } from "../../logs-view";
 import { PackagesState } from "./packages-view";
 
 

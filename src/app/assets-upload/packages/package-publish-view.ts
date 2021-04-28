@@ -1,7 +1,7 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
 import { combineLatest } from "rxjs";
 import { delay, map } from "rxjs/operators";
-import { button } from "../utils-view";
+import { button } from "../../utils-view";
 import { PackagesState } from "./packages-view";
 import { Library,  statusClassesDict, StatusEnum } from "./utils";
 

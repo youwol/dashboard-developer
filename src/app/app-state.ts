@@ -1,6 +1,6 @@
 import { BehaviorSubject } from "rxjs"
 import { map } from "rxjs/operators"
-import { AssetsState, AssetsView } from "./assets/assets-view"
+import { AssetsState, AssetsView } from "./assets-upload/assets-upload.view"
 import { ConfigurationState, ConfigurationView } from "./environment/environment.view"
 import { LocalState, LocalView } from "./local/local-view"
 import { PanelId, tabsDisplayInfo } from "./panels-info"
