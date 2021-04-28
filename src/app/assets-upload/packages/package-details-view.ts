@@ -80,7 +80,7 @@ function explorerGroup(library: Library){
                                 child$(
                                     Backend.uploadPackages.remotePath$(library.assetId),
                                     (pathResponse) => {
-                                        return pathResponse.group && pathResponse.drive && pathResponse.folder 
+                                        return pathResponse.group && pathResponse.drive && pathResponse.folders
                                         ? explorerCard(pathResponse) 
                                         : { class: "fas fa-times fv-text-error" }
                                     }, 
