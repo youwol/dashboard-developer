@@ -1,4 +1,4 @@
-import { attr$, children$, VirtualDOM } from "@youwol/flux-view";
+import { childrenAppendOnly$, VirtualDOM } from "@youwol/flux-view";
 import { ImmutableTree } from "@youwol/fv-tree";
 import { merge, Observable, of } from "rxjs";
 import { filter, map, scan, tap } from "rxjs/operators";
@@ -102,22 +102,19 @@ export class LogsView implements VirtualDOM{
     content(): VirtualDOM{
 
         return {
-            class:' fv-bg-background-alt flex-grow-1 overflow-auto ',
-            children: children$(
+            class:' fv-bg-background-alt flex-grow-1 overflow-auto d-flex flex-column',
+            children: childrenAppendOnly$(
                 this.state.logs$
                 .pipe(
-                    map( m => new Message(m)),
-                    filter( m => m.level != LogLevel.DEBUG && m.step!=undefined),
-                    scan( (acc,e)=> [e,...acc.slice(0,99)], [])
+                    map( m => [new Message(m)]),
+                    filter( ([m]) => m.level != LogLevel.DEBUG && m.step!=undefined)
                     ),
-                (messages) => this.view(messages) 
+                (message) => this.messageView(message),
+                {
+                    sideEffects: (elem) => elem.scrollTop = elem.scrollHeight
+                }
             )
         }
-    }
-
-    view( messages: Array<Message>) : Array<VirtualDOM> {
-
-        return  messages.map( message => this.messageView(message))
     }
 
     messageView( message: Message): VirtualDOM {
