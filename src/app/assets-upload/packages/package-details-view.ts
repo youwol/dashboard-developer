@@ -1,10 +1,10 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
 import { Observable } from "rxjs";
-import { button } from "../../utils-view";
 import { Backend } from "../../backend";
-import { Library, LibraryStatus, statusClassesDict, statusColorsDict, StatusEnum, statusInfoDict } from "./utils";
+import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils";
 import { LogsView } from "../../logs-view";
 import { PackagesState } from "./packages-view";
+import { ExpandableGroup } from "@youwol/fv-group";
 
 
 
@@ -15,20 +15,18 @@ export function detailsView(
     
     let libraryStatus$ = packagesState.librariesStatus$[library.assetId]
     
+
     return { 
-        class: "h-100 d-flex flex-column w-100 fv-bg-background",
+        class: "h-100 d-flex flex-column w-100 fv-bg-background-alt fv-color-primary",
         children:[
             {
-                class: attr$(
-                    libraryStatus$,
-                    ({status}) => statusColorsDict[status],
-                    {   untilFirst: 'h-75 d-flex flex-column fv-bg-background p-3 overflow-auto',
-                        wrapper: (d) => d +  ' h-100 d-flex flex-column fv-bg-background p-3  overflow-auto'
-                    }
-                ),
-                style:{'border-width':'3px'},
+                class: 'h-100 d-flex flex-column fv-bg-background p-3  overflow-auto',
                 children:[
-                    title(library),
+                    title(library, libraryStatus$),
+                    { tag:'hr', class:'w-100 fv-color-primary'},
+                    explorerGroup(library),
+                    versionsStatusGroup(library, packagesState)
+                    /*
                     statusInfo(libraryStatus$), 
                     { innerText: attr$( 
                         libraryStatus$,
@@ -44,7 +42,7 @@ export function detailsView(
                             explorerStatus(library),
                             versionsStatus(library, packagesState)
                         ]
-                    }
+                    }*/
                 ]  
             },
             new LogsView(packagesState.logsState)
@@ -52,7 +50,95 @@ export function detailsView(
     }
 }
 
-function title(library: Library) : VirtualDOM {
+
+function explorerGroup(library: Library){
+
+    let state = new ExpandableGroup.State("Explorer", false)
+    let contentView = (state:ExpandableGroup.State) => {
+        return {
+            class:'my-2 h-100 w-100' , style:{'white-space':'nowrap'},
+            children: [
+                { 
+                    class: "d-flex justify-content-around",
+                    children:[
+                        { innerText: 'Local reference' },
+                        { innerText: 'Remote reference' }
+                    ] 
+                },
+                {   class: "d-flex justify-content-around",
+                    children:[
+                        {   class:'w-50 d-flex justify-content-center',
+                            children:[
+                                child$(
+                                    Backend.uploadPackages.path$(library.treeItems[0].itemId),
+                                    (pathResponse) => explorerCard(pathResponse)
+                                )
+                            ]
+                        },
+                        {   class:'w-50  d-flex justify-content-center',
+                            children:[
+                                child$(
+                                    Backend.uploadPackages.remotePath$(library.assetId),
+                                    (pathResponse) => {
+                                        return pathResponse.group && pathResponse.drive && pathResponse.folder 
+                                        ? explorerCard(pathResponse) 
+                                        : { class: "fas fa-times fv-text-error" }
+                                    }, 
+                                    { untilFirst: { class: 'fas fa-spinner fa-spin fv-text-primary mx-auto my-auto'}}
+                                )
+                            ]
+                        }
+                    ]
+                }
+                /*{ 
+                    class: 'd-flex overflow-auto',
+                    children:[
+                        child$(
+                            Backend.uploadPackages.remotePath$(library.assetId),
+                            (pathResponse) => explorerCard(pathResponse),
+                            { untilFirst: { class: 'fas fa-spinner fa-spin fv-text-primary'}}
+                        )
+                    ]
+                }*/
+            ]
+        }
+    }
+    return new ExpandableGroup.View({
+        state,
+        headerView,
+        contentView,
+        class:'mb-3'
+    } as any)
+}
+
+
+function versionsStatusGroup( library: Library, packagesState: PackagesState ) : VirtualDOM{
+
+    let state = new ExpandableGroup.State("CDN versions", true)
+
+    let contentView = () => {
+        return {   
+            class:'d-flex justify-content-center', 
+            children:[ 
+                versionsTable(library, packagesState) 
+            ] 
+        }
+    }
+    return new ExpandableGroup.View({
+        state,
+        headerView,
+        contentView,
+        class:'mb-3'
+    } as any)
+}
+
+
+function headerView(state:ExpandableGroup.State ) {
+
+    return ExpandableGroup.defaultHeaderView(state)
+}
+
+function title(library: Library, libraryStatus$: Observable<LibraryStatus>) : VirtualDOM {
 
     return {   
         class: 'd-flex justify-content-center align-items-center ',
@@ -61,62 +147,22 @@ function title(library: Library) : VirtualDOM {
                 class:'text-center my-2',
                 innerText: library.libraryName
             },
-            syncBttn(library.assetId)
-        ]
-    }
-}
-
-
-function statusInfo( libraryStatus$ : Observable<LibraryStatus>) : VirtualDOM {
-    return {   
-        class:'my-4 d-flex mx-auto align-items-center  fv-bg-background-alt rounded p-3',
-        style: {'max-width': '50%'},
-        children:[
-            {   tag:'i', 
-                class:attr$(
+            {
+                class: attr$(
                     libraryStatus$,
                     ({status}) => statusClassesDict[status],
-                    { untilFirst:  statusClassesDict['PackageStatus.PROCESSING'],
-                        wrapper: (d) => d + " fa-2x"}
+                    {wrapper:(d) => d + ' mx-2 fa-2x'}
                 )
-            },
-            {   class:'text-center pl-4', style:{'font-size': 'large'},
-                innerHTML: attr$(
-                    libraryStatus$,
-                    ({status}) => statusInfoDict[status],
-                    { untilFirst:  statusInfoDict['PackageStatus.PROCESSING'] }
-                )}
-        ]
-    }
-}
-
-
-function explorerStatus(library: Library) : VirtualDOM {
-
-    return {
-        class:'my-2 h-100 w-50',
-        children: [
-            { 
-                tag:'h5' , innerText: 'Local explorer references' 
-            },
-            { 
-                children: library.treeItems.map( item => ({                    
-                    children:[
-                        child$(
-                            Backend.uploadPackages.path$(item.itemId),
-                            (pathResponse) => explorerCard(pathResponse)
-                        )
-                    ]
-                }))
             }
         ]
     }
 }
 
+
 function explorerCard( {group, drive, folders} ) : VirtualDOM {
 
     return {
-        class: 'border rounded fv-color-primary p-4',
+        class: 'border rounded fv-color-primary p-2 mx-2',
         style: {width:'fit-content'},
         children:[
             {   class: 'd-flex align-items-center',
@@ -126,7 +172,7 @@ function explorerCard( {group, drive, folders} ) : VirtualDOM {
                         class:'fas fa-users px-2'
                     },
                     {
-                        innerText: group
+                        innerText: group,
                     }
                 ]
             },
@@ -137,28 +183,20 @@ function explorerCard( {group, drive, folders} ) : VirtualDOM {
                         class:'fas fa-hdd px-2'
                     },
                     {
-                        innerText: drive.name
+                        innerText: drive.name,
                     }
                 ]
             },
-            {   class:'px-2',
-                innerText: folders.reduce( (acc,e) => acc+' / '+e.name,"")                                            
-            }
-        ]
-    }
-}
-
-
-function versionsStatus( library: Library, packagesState: PackagesState ) : VirtualDOM{
-
-    return {   
-        class:'h-100 w-50 d-flex flex-column', style:{height:'0px'},
-        children: [
-            {   tag:'h5' , innerText: 'Versions' },
-            {   class:"flex-grow-1 overflow-auto",
-                children:[ 
-                    versionsTable(library, packagesState) 
-                ] 
+            {   
+                class: 'd-flex align-items-center',
+                children:[
+                    {   
+                        tag:'i',
+                        class:'fas fa-folder px-2'
+                    },
+                    {   innerText: folders.reduce( (acc,e) => acc+' / '+e.name,"")             
+                    }
+                ]                                        
             }
         ]
     }
@@ -169,15 +207,15 @@ function versionsTable( library: Library, packagesState: PackagesState) : Virtua
 
     return {
         tag: 'table', 
-        class:'fv-color-primary  w-100 text-center',
+        class:'fv-color-primary text-center my-3',
         children:[
             {   tag:'thead',
                 children:[
                     {   tag: 'tr', class:'fv-bg-background-alt',
                         children: [
-                            { tag: 'td', innerText:'Local versions'},
-                            { tag: 'td', innerText:'Published versions'},
-                            { tag: 'td', innerText:''}
+                            { tag: 'td', innerText:'Local versions', class:'px-3'},
+                            { tag: 'td', innerText:'Published versions', class:'px-3'},
+                            { tag: 'td', innerText:'', class:'px-3'}
                         ] 
                     }
                 ]
@@ -188,8 +226,8 @@ function versionsTable( library: Library, packagesState: PackagesState) : Virtua
                         tag: 'tr',
                         class: 'fv-hover-bg-background-alt',
                         children: [
-                            {   tag: 'td', innerText:release.version },
-                            {   tag: 'td', 
+                            {   tag: 'td', innerText:release.version, class:'px-3' },
+                            {   tag: 'td', class:'px-3', 
                                 children:[
                                     {
                                         tag:'i',
@@ -247,14 +285,4 @@ function publishPackageVersionBttn( library: Library, version: string) : Virtual
             {}
         ]
     }
-}
-
-
-function syncBttn( assetId: string ) : VirtualDOM  {
-
-    let btn = button('fas fa-sync', 'Sync.')
-    btn.state.click$.subscribe( (d) => {
-        Backend.uploadPackages.syncPackage$(assetId).subscribe()
-    })
-    return btn
 }
