@@ -1,9 +1,11 @@
 import { VirtualDOM, child$, attr$, children$ } from '@youwol/flux-view'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
-import { map, mergeMap } from 'rxjs/operators'
+import { filter, map, mergeMap, tap } from 'rxjs/operators'
 import { AppState } from './app-state'
+import { Backend } from './backend'
 import { GeneralState } from './environment/general.view'
 import { Environment } from './environment/models'
+import { syncUserModal } from './environment/user-info.view'
 import { PanelId, tabsDisplayInfo } from './panels-info'
 
 
@@ -23,7 +25,7 @@ export class SideBarView implements VirtualDOM{
                     {
                         tag:'a',
                         href:'/ui/workspace-explorer',
-                        class:'w-100 mb-5',
+                        class:'w-100 mb-2',
                         children:[
                             {
                                 tag: 'img',
@@ -34,6 +36,7 @@ export class SideBarView implements VirtualDOM{
                             },
                         ]
                     },
+                    loginView(),
                     sectionGeneric(
                         'Environment',
                         'fas fa-users-cog my-2',
@@ -67,6 +70,38 @@ export class SideBarView implements VirtualDOM{
     }
 }
 
+function loginView(){
+
+    let environment$ = Backend.environment.connectWs().pipe(
+        filter( message => message.userInfo),
+        tap( m => console.log(m))
+    )
+    
+    return {
+        class:'d-flex align-items-center mb-5 fv-hover-text-focus fv-pointer',
+        onclick: () => syncUserModal(),
+        children:[
+            {
+                class:'fas fa-user mx-2'
+            },
+            {   class:'fv-hover-text-focus fv-pointer',
+                innerText: attr$(
+                    environment$,
+                    (env) => env.userInfo.email
+                )
+            },
+            {
+                class: attr$(
+                    environment$,
+                    (env) => env.remoteGatewayInfo.connected ? "fv-text-success" : "fv-text-error",
+                    {
+                        wrapper: (d) => d + " fas fa-wifi px-2"
+                    }
+                )
+            }
+        ]
+    }
+}
 function sectionTitle( 
     name: string,
     classes: string,

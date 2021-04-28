@@ -111,7 +111,7 @@ export function userInfoView(environment: Environment) {
     )
 }
 
-function syncUserModal() {
+export function syncUserModal() {
 
     let modalState = new Modal.State()
 
@@ -191,9 +191,10 @@ function syncUserModal() {
     okBtn.state.click$.pipe(
         withLatestFrom( combineLatest([email$, password$])),
         mergeMap( ([click, [email,password]]) => Backend.environment.syncUser$({email,password,remoteEnvironment:'dev.platform.youwol.com'}))
-    )
-        .subscribe((resp) => {
+    ).subscribe(
+        (resp) => {
             console.log(resp)
             div.remove()
-        })
+        },
+        (err)=> div.remove() )
 }
