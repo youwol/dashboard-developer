@@ -4,7 +4,8 @@ import { FrontendsState, FrontendsView } from './frontends-view'
 import { ModulesState, ModulesView } from './modules-view'
 import { BackendsState, BackendsView } from './backends-view'
 import { BehaviorSubject, Subject } from 'rxjs'
-import { PanelId } from '../sidebar-view'
+import { PanelId } from '../panels-info'
+
 
 
 

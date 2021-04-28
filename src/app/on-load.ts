@@ -1,42 +1,24 @@
 import { child$, render } from '@youwol/flux-view'
-import { LocalState, LocalView } from "./local/local-view";
-import { PanelId, SideBarView } from "./sidebar-view";
-import { AssetsState, AssetsView } from "./assets/assets-view";
-import { filter, map, take } from 'rxjs/operators';
-import { ConfigurationState, ConfigurationView } from './environment/environment.view';
+import { SideBarView } from "./sidebar-view";
+import { filter, take } from 'rxjs/operators';
 import { Backend } from './backend';
 import { plugSystemErrors } from './system-errors.view';
+import { AppState } from './app-state';
 
 require('./style.css');
 
+let appState = new AppState()
 
-let sideBar = new SideBarView()
+let sideBar = new SideBarView(appState)
 
-let localState = new LocalState(sideBar.selected$)
-let assetsState = new AssetsState(sideBar.selected$)
-let configurationState = new ConfigurationState(sideBar.selected$)
 
-let panelViewFactory$ = sideBar.selected$.pipe(
-    map( selected => {
-
-        if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks].includes(selected)){
-            return new LocalView(localState)
-        }
-        if ([PanelId.AssetsUploadPackages].includes(selected)){
-            return new AssetsView(assetsState)
-        }
-        if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){
-            return new ConfigurationView(configurationState)
-        }
-    })
-)
 
 let vDOM = {
     class: 'd-flex fv-text-primary h-100',
     children: [
         sideBar,
         child$( 
-            panelViewFactory$,
+            appState.panelViewFactory$,
             (selected) => selected
         )
     ]
@@ -51,7 +33,6 @@ let systemErrors$ = adminWS.pipe(
 plugSystemErrors( systemErrors$ )
 
 adminWS.pipe(take(1)).subscribe( message => {
-    console.log("Go!")
     document.body.appendChild(render(vDOM))
 })
 

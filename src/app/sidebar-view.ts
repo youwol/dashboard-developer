@@ -1,90 +1,69 @@
-import { VirtualDOM, child$, attr$ } from '@youwol/flux-view'
+import { VirtualDOM, child$, attr$, children$ } from '@youwol/flux-view'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { map, mergeMap } from 'rxjs/operators'
+import { AppState } from './app-state'
 import { GeneralState } from './environment/general.view'
 import { Environment } from './environment/models'
+import { PanelId, tabsDisplayInfo } from './panels-info'
 
-
-export enum PanelId{
-    ConfigurationGeneral = "conf.general",
-    ConfigurationRawFile = "conf.raw-file",
-    LocalEnvPackage = "local.packages",
-    LocalEnvFronts = "local.fronts",
-    LocalEnvBacks = "local.backs",
-    AssetsUploadPackages = "upload.packages",
-    AssetsUploadFluxApp = "upload.fluxapp",
-    AssetsUploadData = "upload.fluxdata",
-}
-
-let tabsDisplayInfo = {
-    [PanelId.ConfigurationGeneral]: { title: "General", enabled: true},
-    [PanelId.ConfigurationRawFile]: { title: "Raw file", enabled: true},
-    [PanelId.LocalEnvPackage]: { title: "Packages", enabled: true},
-    [PanelId.LocalEnvFronts]: { title: "Front Ends", enabled: true},
-    [PanelId.LocalEnvBacks]: { title: "Back Ends", enabled: true},
-    [PanelId.AssetsUploadPackages]: { title: "Packages", enabled: true},
-    [PanelId.AssetsUploadFluxApp]: { title: "Flux app", enabled: false},
-    [PanelId.AssetsUploadData]: { title: "Data", enabled: false},
-}
 
 export class SideBarView implements VirtualDOM{
 
     public readonly tag = 'div'
     public readonly class = "d-flex justify-content-center py-5 px-2 border h-100 "
     public readonly style = { 'min-width':'300px'}
-    public readonly selected$ = new BehaviorSubject<PanelId>(PanelId.ConfigurationGeneral)
 
+    public readonly children
 
-    public readonly children = [
-        {
-            class:"h-100 mx-auto d-flex flex-column pl-3",
-            children:[ 
-                {
-                    tag:'a',
-                    href:'/ui/workspace-explorer',
-                    class:'w-100 mb-5',
-                    children:[
-                        {
-                            tag: 'img',
-                            class:'mx-auto text-center fv-pointer',
-                            style:{width:"75%"},
-                            href:'/ui/workspace-explorer',
-                            src:'/api/assets-gateway/raw/package/QHlvdXdvbC9mbHV4LXlvdXdvbC1lc3NlbnRpYWxz/latest/assets/images/logo_YouWol_Platform_white.png'
-                        },
-                    ]
-                },
-                sectionGeneric(
-                    'Environment',
-                    'fas fa-users-cog my-2',
-                    [PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile],
-                    this.selected$
-                ),
-                sectionGeneric(
-                    'My computer',
-                    'fas fa-laptop-code my-2',
-                    [PanelId.LocalEnvPackage,PanelId.LocalEnvFronts,PanelId.LocalEnvBacks],
-                    this.selected$
-                ),
-                sectionGeneric(
-                    'Upload assets',
-                    'fas fa-cloud-upload-alt my-2',
-                    [PanelId.AssetsUploadPackages/*,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
-                    this.selected$
-                ),
-                sectionGeneric(
-                    'Download assets',
-                    'fas fa-cloud-download-alt my-2',
-                    [/*PanelId.AssetsUploadPackages,PanelId.AssetsUploadFluxApp,PanelId.AssetsUploadData*/],
-                    this.selected$,
-                    false
-                ),
-                sectionResources()
-            ]
-        }
-       
-    ]
-
-    constructor(){
+    constructor( public readonly state: AppState ){
+        this.children = [
+            {
+                class:"h-100 mx-auto d-flex flex-column pl-3",
+                children:[ 
+                    {
+                        tag:'a',
+                        href:'/ui/workspace-explorer',
+                        class:'w-100 mb-5',
+                        children:[
+                            {
+                                tag: 'img',
+                                class:'mx-auto text-center fv-pointer',
+                                style:{width:"75%"},
+                                href:'/ui/workspace-explorer',
+                                src:'/api/assets-gateway/raw/package/QHlvdXdvbC9mbHV4LXlvdXdvbC1lc3NlbnRpYWxz/latest/assets/images/logo_YouWol_Platform_white.png'
+                            },
+                        ]
+                    },
+                    sectionGeneric(
+                        'Environment',
+                        'fas fa-users-cog my-2',
+                        this.state.environmentChildren$,
+                        this.state.selected$
+                    ),
+                    sectionGeneric(
+                        'My computer',
+                        'fas fa-laptop-code my-2',
+                        this.state.localChildren$,
+                        this.state.selected$
+                    ),
+                    sectionGeneric(
+                        'Upload assets',
+                        'fas fa-cloud-upload-alt my-2',
+                        this.state.uploadChildren$,
+                        this.state.selected$
+                    ),
+                    sectionGeneric(
+                        'Download assets',
+                        'fas fa-cloud-download-alt my-2',
+                        new BehaviorSubject([]),
+                        this.state.selected$,
+                        false
+                    ),
+                    sectionResources()
+                ]
+            }
+           
+        ]
     }
 }
 
@@ -113,16 +92,19 @@ function sectionTitle(
     }
  }
 
- function subSectionsList( targets: Array<PanelId>, selected$:Subject<PanelId>)  {
+ function subSectionsList( 
+     targets$: Observable<Array<PanelId>>, 
+     selected$:Subject<PanelId>)  {
 
      return {
         tag: 'ul',
-        children:targets.map( panelId => 
-            tabSubSection(panelId, selected$)
+        children: children$(
+            targets$,
+            (targets) => targets.map( panelId =>  tabSubSection(panelId, selected$) )
         )
     }
-
  }
+ 
 function tabSubSection( target: PanelId, selected$:Subject<PanelId>) : VirtualDOM {
 
     let enabled = tabsDisplayInfo[target].enabled
@@ -141,19 +123,24 @@ function tabSubSection( target: PanelId, selected$:Subject<PanelId>) : VirtualDO
     }
 }
 
-function sectionGeneric(name: string, classes: string, targets: Array<PanelId>, selected$:Subject<PanelId>, enabled: boolean =true){
+function sectionGeneric(
+    name: string, 
+    classes: string, 
+    targets$: Observable<Array<PanelId>>, 
+    selected$:Subject<PanelId>, 
+    enabled: boolean =true){
 
     let sectionSelected$ = selected$.pipe(
-        map( selected => targets.includes(selected))
+        mergeMap( selected => targets$.pipe( map( (targets) => targets.includes(selected)) ) )
     )
 
     return {
         class: 'my-2 '+(enabled ? '' : 'fv-text-disabled'),
         children:[
             sectionTitle(name, classes, sectionSelected$, enabled),
-            subSectionsList(targets, selected$)
+            subSectionsList(targets$, selected$)
         ],
-        onclick:()=> selected$.next(targets[0])
+        //onclick:()=> selected$.next(targets[0])
     }
 }
 

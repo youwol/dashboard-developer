@@ -1,7 +1,8 @@
 import { VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
 import { BehaviorSubject, Subject } from 'rxjs'
-import { PanelId } from '../sidebar-view'
+import { PanelId } from '../panels-info'
+
 import { GeneralState, GeneralView } from './general.view'
 import { PackagesState } from './package.view'
 import { RawfileView } from './raw-file.view'
