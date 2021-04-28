@@ -53,6 +53,8 @@ export class AssetsState{
     addTabUpload( library: Library ) {
 
         //this.appState.addTabUpload(name)
+        if( this.tabsData$.getValue().find( tab => tab instanceof PackageTabData && tab.id == library.libraryName))
+            return 
         this.tabsData$.next([ 
             ...this.tabsData$.getValue(), 
             new PackageTabData(library, this.packagesState) 
@@ -60,7 +62,9 @@ export class AssetsState{
         this.selectedTab$.next(library.libraryName)
     }
     removeTabUpload( name ) {
-        this.selectedTab$.next(this.tabsData$.getValue()[0].id)
+        if( this.selectedTab$.getValue() == name )
+            this.selectedTab$.next(this.tabsData$.getValue()[0].id)
+        
         this.tabsData$.next(this.tabsData$.getValue().filter( (tab) => tab.name != name))
     }
 }
