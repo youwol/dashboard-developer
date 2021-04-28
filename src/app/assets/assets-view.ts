@@ -1,7 +1,6 @@
 import { HTMLElement$, VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
 import { BehaviorSubject, Subject } from 'rxjs';
-import { AppState } from '../app-state';
 import { PanelId } from '../panels-info';
 import { detailsView } from './package-details-view';
 import { PackagesState,PackagesView } from './packages-view';
@@ -42,7 +41,7 @@ export class AssetsState{
 
     public readonly selectedTab$ = new BehaviorSubject("packages")
 
-    constructor(public readonly selectedPanel$: Subject<PanelId>, public readonly appState){
+    constructor(public readonly selectedPanel$: Subject<PanelId>){
 
         this.packagesState = new PackagesState(this)
 
@@ -54,7 +53,7 @@ export class AssetsState{
     addTabUpload( library: Library ) {
 
         //this.appState.addTabUpload(name)
-        this.tabsData$.next( [ 
+        this.tabsData$.next([ 
             ...this.tabsData$.getValue(), 
             new PackageTabData(library, this.packagesState) 
         ])

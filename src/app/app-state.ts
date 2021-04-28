@@ -15,7 +15,7 @@ export class AppState{
     public readonly selected$ = new BehaviorSubject<PanelId>(PanelId.ConfigurationGeneral)
 
     localState = new LocalState(this.selected$)
-    assetsState = new AssetsState(this.selected$, this)
+    assetsState = new AssetsState(this.selected$)
     configurationState = new ConfigurationState(this.selected$)
 
     panelViewFactory$ = this.selected$.pipe(
