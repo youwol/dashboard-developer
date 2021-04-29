@@ -45,6 +45,12 @@ export interface Environment {
     remotesInfo: Array<RemoteGatewayInfo>
 }
 
+export function instanceOfEnvironment(object: any): object is Environment{
+
+    return object.configurationPath && object.configurationParameters && object.userInfo && object.users &&
+    object.configuration && object.remoteGatewayInfo && object.remotesInfo
+
+}
 
 export interface ConfigurationError {
     reason: string
