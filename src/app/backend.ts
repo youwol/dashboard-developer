@@ -338,14 +338,14 @@ export class UploadPackagesRouter{
 
     static publishLibraryVersion$(libraryName: string, version: string) {
 
-        let url = `${UploadPackagesRouter.urlBase}/${libraryName}/${version}`
+        let url = `${UploadPackagesRouter.urlBase}/publish/${libraryName}/${version}`
         let request = new Request(url, { method: 'POST', headers: Backend.headers })
         return createObservableFromFetch(request)
     }
 
     static syncPackage$(libraryName: string) {
 
-        let url = `${UploadPackagesRouter.urlBase}/${libraryName}`
+        let url = `${UploadPackagesRouter.urlBase}/publish/${libraryName}`
         let request = new Request(url, { method: 'POST', headers: Backend.headers })
         return createObservableFromFetch(request)
     }
