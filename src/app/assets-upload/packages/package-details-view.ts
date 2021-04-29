@@ -5,6 +5,7 @@ import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils";
 import { LogsView } from "../../logs-view";
 import { PackagesState } from "./packages-view";
 import { ExpandableGroup } from "@youwol/fv-group";
+import { mergeMap } from "rxjs/operators";
 
 
 
@@ -61,7 +62,9 @@ function explorerGroup(library: Library){
                         {   class:'w-50  d-flex justify-content-center',
                             children:[
                                 child$(
-                                    Backend.uploadPackages.remotePath$(library.assetId),
+                                    Backend.environment.environments$.pipe(
+                                        mergeMap( () =>  Backend.uploadPackages.remotePath$(library.assetId) )
+                                    ),
                                     (pathResponse) => {
                                         return pathResponse.group && pathResponse.drive && pathResponse.folders
                                         ? explorerCard(pathResponse) 
