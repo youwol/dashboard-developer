@@ -1,11 +1,11 @@
 import { Backend } from "../../backend";
-import { BehaviorSubject, combineLatest, ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, combineLatest, Observable, ReplaySubject, Subject } from "rxjs";
 import { VirtualDOM, child$, attr$, HTMLElement$} from '@youwol/flux-view'
 import { Library, LibraryStatus, StatusEnum } from "./utils";
 import { publishView } from "./package-publish-view";
 import { tableView } from "./packages-status-view";
 import { LogsState, LogsView } from "../../logs-view";
-import { filter, map, tap } from "rxjs/operators";
+import { filter, map, mergeMap, tap } from "rxjs/operators";
 import { Switch } from "@youwol/fv-button";
 import { ExpandableGroup } from "@youwol/fv-group";
 
@@ -46,7 +46,9 @@ export class PackagesState{
 
     subscribe() {
 
-        let s1 = Backend.uploadPackages.status$().subscribe( ({libraries}:{libraries:Array<Library>}) => {
+        let s1 = Backend.environment.environments$.pipe( 
+            mergeMap( () => Backend.uploadPackages.status$())
+        ).subscribe( ({libraries}:{libraries:Array<Library>}) => {
             
             libraries.forEach( (asset: Library) => {
                 this.librariesStatus$[asset.assetId] = new ReplaySubject() 
@@ -60,8 +62,13 @@ export class PackagesState{
             })
             this.libraries$.next(libraries)
         })
+        let messages$ = Backend.environment.environments$.pipe( 
+            mergeMap( () => this.webSocket$)
+        )
         // this is a message related to a library version
-        let s2 = this.webSocket$.pipe( filter( m => m.assetId && m.status && m.details && m.version) )
+        let s2 = messages$.pipe( 
+            filter( m => m.assetId && m.status && m.details && m.version) 
+        )
         .subscribe( ({assetId, version, status}) => {
 
             this.releasesStatus$[assetId][version].next(status)
@@ -83,7 +90,7 @@ export class PackagesState{
 
         // this is a message related to a package (all version of a library)
         let s3 = combineLatest([
-            this.webSocket$.pipe( filter( m => m.assetId && m.status && m.details && !m.version) ),
+            messages$.pipe( filter( m => m.assetId && m.status && m.details && !m.version) ),
             this.libraries$.pipe( filter( m => m.length > 0) )
         ])
         .subscribe( ([message, _ ]: [LibraryStatus, any]) => {
