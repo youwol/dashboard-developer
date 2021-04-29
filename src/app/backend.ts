@@ -356,6 +356,12 @@ export class UploadPackagesRouter{
         let request = new Request(url, { method: 'POST', body:JSON.stringify(body), headers: Backend.headers })
         return createObservableFromFetch(request)
     }
+
+    static registerAsset( assetId: string) {
+        let url = `${UploadPackagesRouter.urlBase}/register-asset/${assetId}`
+        let request = new Request(url, { method: 'POST', headers: Backend.headers })
+        return createObservableFromFetch(request)
+    }
 }
 /*
 export class AssetsRouter{
