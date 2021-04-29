@@ -1,4 +1,5 @@
 import { Observable, ReplaySubject, Subject } from "rxjs";
+import { Environment, instanceOfEnvironment } from "./environment/models";
 import { BackEndStatus, Dependencies, FrontEndStatus, Status } from "./local/utils";
 
 export function createObservableFromFetch( request, extractFct = (d) =>d ){
@@ -231,7 +232,8 @@ export class EnvironmentRouter{
 
     private static urlBase = '/admin/environment'
     private static webSocket$ : ReplaySubject<any> 
-    
+    public static environments$ = new ReplaySubject<Environment>(1)
+
     static connectWs(){
 
         if(EnvironmentRouter.webSocket$)
@@ -240,8 +242,12 @@ export class EnvironmentRouter{
         EnvironmentRouter.webSocket$ = new ReplaySubject()
         var ws = new WebSocket(`ws://${window.location.host}${EnvironmentRouter.urlBase}/ws`);
         ws.onmessage = (event) => {
-            EnvironmentRouter.webSocket$.next(JSON.parse(event.data))
+            let d = JSON.parse(event.data)
+            EnvironmentRouter.webSocket$.next(d)
+            if(instanceOfEnvironment(d))
+                EnvironmentRouter.environments$.next(d) 
         };
+
         return EnvironmentRouter.webSocket$
     }
 
