@@ -1,10 +1,11 @@
 import { VirtualDOM, child$, attr$, children$ } from '@youwol/flux-view'
+import { Select } from '@youwol/fv-input'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
-import { filter, map, mergeMap, tap } from 'rxjs/operators'
+import { distinctUntilChanged, filter, map, mergeMap, skip, tap } from 'rxjs/operators'
 import { AppState } from './app-state'
 import { Backend } from './backend'
 import { GeneralState } from './environment/general.view'
-import { Environment } from './environment/models'
+import { Environment, instanceOfEnvironment } from './environment/models'
 import { syncUserModal } from './environment/user-info.view'
 import { PanelId, tabsDisplayInfo } from './panels-info'
 
@@ -18,6 +19,7 @@ export class SideBarView implements VirtualDOM{
     public readonly children
 
     constructor( public readonly state: AppState ){
+
         this.children = [
             {
                 class:"h-100 mx-auto d-flex flex-column pl-3",
@@ -25,7 +27,7 @@ export class SideBarView implements VirtualDOM{
                     {
                         tag:'a',
                         href:'/ui/workspace-explorer',
-                        class:'w-100 mb-2',
+                        class:'w-100 mb-2 d-flex justify-content-center',
                         children:[
                             {
                                 tag: 'img',
@@ -36,7 +38,9 @@ export class SideBarView implements VirtualDOM{
                             },
                         ]
                     },
-                    loginView(),
+                    child$(     Backend.environment.environments$,
+                                (env)=>loginView(env)
+                            ),
                     sectionGeneric(
                         'Environment',
                         'fas fa-users-cog my-2',
@@ -70,35 +74,46 @@ export class SideBarView implements VirtualDOM{
     }
 }
 
-function loginView(){
+function loginView(environment: Environment){
 
-    let environment$ = Backend.environment.connectWs().pipe(
-        filter( message => message.userInfo),
-        tap( m => console.log(m))
-    )
+    let items = environment.remotesInfo.map( ({host}) => new Select.ItemData(host, host)) 
+
+    let selected$ = new BehaviorSubject(environment.remoteGatewayInfo.host)    
     
+    let selectState = new Select.State(items, selected$ )
+    selectState.selectionId$.pipe(
+        skip(1),
+        distinctUntilChanged(),
+        mergeMap( (name) => {
+            return Backend.environment.selectRemoteGateway$({name}) 
+        })
+    ).subscribe(() => {})
+
+
     return {
-        class:'d-flex align-items-center mb-5 fv-hover-text-focus fv-pointer',
-        onclick: () => syncUserModal(),
+        class:'mb-5',
         children:[
-            {
-                class:'fas fa-user mx-2'
-            },
-            {   class:'fv-hover-text-focus fv-pointer',
-                innerText: attr$(
-                    environment$,
-                    (env) => env.userInfo.email
-                )
-            },
-            {
-                class: attr$(
-                    environment$,
-                    (env) => env.remoteGatewayInfo.connected ? "fv-text-success" : "fv-text-error",
+            {   
+                class:'d-flex align-items-center fv-hover-text-focus fv-pointer  justify-content-center',
+                onclick: () => syncUserModal(),
+                children:[
                     {
-                        wrapper: (d) => d + " fas fa-wifi px-2"
+                        class:'fas fa-user'
+                    },
+                    {   class:'fv-hover-text-focus fv-pointer mx-2',
+                        innerText: environment.userInfo.email
                     }
-                )
+                ]
+            },
+            {   class:'d-flex align-items-center justify-content-center',
+                children: [
+                    {
+                        class: "fas fa-wifi " + (environment.remoteGatewayInfo.connected ? "fv-text-success" : "fv-text-error")
+                    },
+                    new Select.View({state:selectState, class:'mx-2'} as any)
+                ]
             }
+            
         ]
     }
 }
