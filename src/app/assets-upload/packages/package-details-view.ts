@@ -26,23 +26,6 @@ export function detailsView(
                     { tag:'hr', class:'w-100 fv-color-primary'},
                     explorerGroup(library),
                     versionsStatusGroup(library, packagesState)
-                    /*
-                    statusInfo(libraryStatus$), 
-                    { innerText: attr$( 
-                        libraryStatus$,
-                        (s:LibraryStatus) => "assetStatus:" + s.assetStatus) 
-                    },
-                    { innerText: attr$( 
-                        libraryStatus$,
-                        (s:LibraryStatus) => "treeStatus:" + s.treeStatus) 
-                    },
-                    {
-                        class:'d-flex h-100',
-                        children:[
-                            explorerStatus(library),
-                            versionsStatus(library, packagesState)
-                        ]
-                    }*/
                 ]  
             },
             new LogsView(packagesState.logsState)
