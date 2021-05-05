@@ -1,7 +1,7 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view"
 import { combineLatest, merge, Observable, Subject } from "rxjs"
 import { delay, filter, map } from "rxjs/operators"
-import { Backend } from "../../backend"
+import { Backend } from "../../backend/router"
 import { PackagesState } from "./packages-view"
 
 import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils"

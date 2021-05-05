@@ -1,7 +1,7 @@
 import { child$, render } from '@youwol/flux-view'
 import { SideBarView } from "./sidebar-view";
 import { filter, take } from 'rxjs/operators';
-import { Backend } from './backend';
+import { Backend } from './backend/router';
 import { plugSystemErrors } from './system-errors.view';
 import { AppState } from './app-state';
 

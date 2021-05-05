@@ -1,5 +1,5 @@
 import { child$, HTMLElement$, VirtualDOM } from "@youwol/flux-view"
-import { Backend } from "../backend"
+import { Backend } from "../backend/router"
 import { LogsState, LogsView } from "../logs-view"
 import { descriptionView, innerTabClasses } from "../utils-view"
 import { GeneralState } from "./general.view"

@@ -3,7 +3,7 @@ import { ExpandableGroup, Modal } from "@youwol/fv-group";
 import { Select } from "@youwol/fv-input";
 import { BehaviorSubject, combineLatest, Observable, Subject } from "rxjs";
 import { distinctUntilChanged, map, mergeMap, skip, withLatestFrom } from "rxjs/operators";
-import { Backend } from "../backend";
+import { Backend } from "../backend/router";
 import { button, descriptionView } from "../utils-view";
 import { Environment } from "./models";
 

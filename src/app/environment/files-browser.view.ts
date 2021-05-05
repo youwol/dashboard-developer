@@ -2,7 +2,7 @@ import { child$, children$, render, VirtualDOM } from "@youwol/flux-view"
 import { Modal } from "@youwol/fv-group"
 import { BehaviorSubject, Subject } from "rxjs"
 import { mergeMap } from "rxjs/operators"
-import { Backend } from "../backend"
+import { Backend } from "../backend/router"
 import { GeneralState } from "./general.view"
 import { Environment } from "./models"
 

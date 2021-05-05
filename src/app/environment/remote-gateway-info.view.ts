@@ -3,7 +3,7 @@ import { ExpandableGroup } from "@youwol/fv-group";
 import { Select } from "@youwol/fv-input";
 import { BehaviorSubject, Observable } from "rxjs";
 import { distinctUntilChanged, map, mergeMap, skip } from "rxjs/operators";
-import { Backend } from "../backend";
+import { Backend } from "../backend/router";
 import { descriptionView } from "../utils-view";
 import { Environment, RemoteGatewayInfo } from "./models";
 

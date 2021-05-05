@@ -1,4 +1,4 @@
-import { Backend } from "../backend";
+import { Backend } from "../backend/router";
 import { BehaviorSubject, combineLatest, ReplaySubject, Subject } from "rxjs";
 import { VirtualDOM, child$, attr$ } from '@youwol/flux-view'
 import { debounceTime, filter, map, mergeMap, switchMap, take } from "rxjs/operators";
