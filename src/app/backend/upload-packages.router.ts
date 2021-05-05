@@ -1,6 +1,107 @@
-import { Subject } from "rxjs";
+import { BehaviorSubject, merge, ReplaySubject, Subject } from "rxjs";
+import { mergeMap, scan, tap } from "rxjs/operators";
+import { EnvironmentRouter } from "./environment.router";
 import { createObservableFromFetch } from "./router";
 
+export enum StatusEnum{
+
+    NOT_FOUND = 'PackageStatus.NOT_FOUND',
+    SYNC = 'PackageStatus.SYNC',
+    MISMATCH = 'PackageStatus.MISMATCH',
+    PROCESSING = 'PackageStatus.PROCESSING',
+    DONE = 'PackageStatus.DONE'
+}
+
+
+
+export interface TreeItem{
+    name: string
+    itemId: string
+    group: string
+    borrowed: boolean
+    rawId: string
+}
+
+export interface Releases{
+
+    version: string
+    fingerprint: string
+}
+
+
+export class PackageStatus {
+    constructor() {}
+}
+
+export class ResolvedPackage extends PackageStatus{
+
+    cdnStatus: StatusEnum
+    treeStatus: StatusEnum
+    assetStatus: StatusEnum
+
+    constructor({cdnStatus, treeStatus, assetStatus}) {
+        super()
+        this.cdnStatus = cdnStatus
+        this.treeStatus = treeStatus
+        this.assetStatus = assetStatus
+    }
+}
+export class ProcessingPackage extends PackageStatus{
+}
+
+export class Package{
+
+    assetId: string
+    rawId: string
+    name: string
+    namespace: string
+    treeItems : Array<TreeItem>
+    releases : Array<Releases>
+    status: PackageStatus
+
+    constructor({
+        assetId,
+        name,
+        namespace,
+        treeItems,
+        releases,
+        status
+    }){
+        this.assetId = assetId
+        this.name = name
+        this.namespace = namespace
+        this.treeItems = treeItems
+        this.releases = releases
+        this.status = ( typeof(status) == 'string' )
+            ? new ProcessingPackage()
+            : new ResolvedPackage(status)
+            
+    }
+}
+
+export class PackageVersion{
+
+    assetId: string
+    rawId: string
+    name: string
+    namespace: string
+    version: string
+    status: StatusEnum
+
+    constructor({
+        assetId,
+        name,
+        namespace,
+        version,
+        status
+    }){
+        this.assetId = assetId
+        this.name = name
+        this.namespace = namespace
+        this.version = version
+        this.status = status            
+    }
+}
 
 export class UploadPackagesRouter{
 
@@ -9,21 +110,61 @@ export class UploadPackagesRouter{
 
     static headers = {}
 
+    static packages$ = new BehaviorSubject<{[key:string]: Package}>({})
+    static package$ = new ReplaySubject<Package>(1)
+
+    static packageVersions$ = new BehaviorSubject<{[key:string]: PackageVersion}>({})
+    static packageVersion$ = new ReplaySubject<PackageVersion>(1)
+
     static connectWs(){
 
         if(UploadPackagesRouter.webSocket$)
             return UploadPackagesRouter.webSocket$
 
-            UploadPackagesRouter.webSocket$ = new Subject()
+        UploadPackagesRouter.webSocket$ = new Subject()
         var ws = new WebSocket(`ws://${window.location.host}${UploadPackagesRouter.urlBase}/ws`);
+
+        EnvironmentRouter.environments$.pipe(
+            mergeMap( () => this.status$() )
+        ).subscribe()
+
         ws.onmessage = (event) => {
-            UploadPackagesRouter.webSocket$.next(JSON.parse(event.data))
+            let data = JSON.parse(event.data)
+            UploadPackagesRouter.webSocket$.next(data)
+            if(data.target && data.target == 'package') 
+                UploadPackagesRouter.package$.next(new Package(data))
+            
+            if(data.target && data.target == 'packageVersion') 
+                UploadPackagesRouter.packageVersion$.next(new PackageVersion(data))
+            
         };
+
+        this.package$.pipe(
+            scan( (acc, e) => {
+                if(e==undefined)
+                    return {}
+                return {...acc, ...{[e.assetId]: e} }
+            }, {})
+        ).subscribe( (state) => {
+            this.packages$.next(state)
+        })
+        
+        this.packageVersion$.pipe(
+            scan( (acc, e) => {
+                if(e==undefined)
+                    return {}
+                return {...acc, ...{[`${e.name}#${e.version}`]: e} }
+            }, {})
+        ).subscribe( (state) => {
+            this.packageVersions$.next(state)
+        })
+        
         return UploadPackagesRouter.webSocket$
     }
 
     static status$() {
-
+        this.package$.next(undefined)
+        this.packageVersion$.next(undefined)
         let url = `${UploadPackagesRouter.urlBase}/status`
         let request = new Request(url, { method: 'GET', headers: UploadPackagesRouter.headers })
         return createObservableFromFetch(request)

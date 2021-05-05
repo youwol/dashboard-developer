@@ -1,19 +1,20 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view"
 import { combineLatest, merge, Observable, Subject } from "rxjs"
 import { delay, filter, map } from "rxjs/operators"
+import { Package, PackageStatus, ProcessingPackage, ResolvedPackage } from '../../backend/upload-packages.router'
 import { Backend } from "../../backend/router"
-import { PackagesState } from "./packages-view"
+import { Options, PackagesState } from "./packages-view"
 
 import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils"
 
 
 export function tableView(
-    libraries: Array<Library>, 
-    selected$ : Subject<Library>, 
+    packages: Array<Package>, 
+    options: Options,
+    selected$ : Subject<Package>, 
     state: PackagesState
     ): VirtualDOM {
 
-    let librariesStatus$ = state.librariesStatus$
 
     return {
         class: 'h-100 d-flex flex-column',
@@ -39,30 +40,25 @@ export function tableView(
                             },
                             {
                                 tag: 'tbody',
-                                children: libraries.map( library => {
+                                children: packages.map( (pack: Package) => {
+                                    let classes = 'fv-pointer fv-hover-bg-background-alt '
+                                    if( pack.status instanceof ResolvedPackage 
+                                        && !options.showSynced
+                                        && pack.status.cdnStatus == StatusEnum.SYNC 
+                                        && pack.status.treeStatus == StatusEnum.SYNC){
+                                        classes += 'd-none'
+                                    }
                                     return {
                                         tag: 'tr',
-                                        class: attr$(
-                                            combineLatest([state.options$, librariesStatus$[library.assetId]]).pipe(
-                                                map( ([{showSynced}, libStatus]) => {
-                                                    if(showSynced)
-                                                        return true
-                                                    return libStatus.status == StatusEnum.SYNC
-                                                        ? false
-                                                        : true
-                                                })
-                                            ),
-                                            (display) => display ? '' : 'd-none',
-                                            { wrapper: (d) => d + ' fv-pointer fv-hover-bg-background-alt'}
-                                            ),
+                                        class:  classes,
                                         children: [
                                             {
-                                                tag: 'td', innerText: library.libraryName, class:'px-3'
+                                                tag: 'td', innerText: pack.name, class:'px-3'
                                             },
-                                            statusCellCDN( library, state  ),
-                                            statusCellAsset(library, state)
+                                            statusCellCDN( pack, state  ),
+                                            statusCellAsset(pack, state)
                                         ],
-                                        onclick: () => selected$.next(library)
+                                        onclick: () => selected$.next(pack)
                                     }
                                 })
                             }
@@ -70,65 +66,56 @@ export function tableView(
                     }
                 ],
             }
-
         ]
     }
 }
 
-function statusCellCDN( library: Library, state: PackagesState ) {
+function statusCellCDN( pack: Package, state: PackagesState ) {
 
-    let libraryStatus$ = state.librariesStatus$[library.assetId].pipe(map(({cdnStatus}) => cdnStatus))
-    let publishStatus$ =  merge(
-        ...library.releases.map( r => state.publishStatus$(library.assetId, r.version))
-    ).pipe(
-        filter( status =>  status == StatusEnum.PROCESSING )
-    ) 
+    let classes = ""
+    if(pack.status instanceof ProcessingPackage)
+        classes = 'fas fa-spinner fa-spin'
+
+    if(pack.status instanceof ResolvedPackage)
+        classes = statusClassesDict[pack.status.cdnStatus]
+
     return {
         tag: 'td',
         children:[
             {
-                class: attr$(
-                    merge(libraryStatus$, publishStatus$) , //packagesStatus$[d.assetId],
-                    (status) => statusClassesDict[status],
-                    { untilFirst: 'fas fa-spinner fa-spin' }
-                )
+                class: classes
             }
         ]
     }
 }
 
-function statusCellAsset( library: Library, state: PackagesState ) {
+function statusCellAsset( pack: Package, state: PackagesState ) {
 
-    let libraryStatus$ = state.librariesStatus$[library.assetId]
-    .pipe( map(({treeStatus}) => treeStatus) )
+    let classes = ""
+    let uploadChild = {}
+    if(pack.status instanceof ProcessingPackage)
+        classes = 'fas fa-spinner fa-spin'
+
+    if(pack.status instanceof ResolvedPackage){
+        classes = statusClassesDict[pack.status.treeStatus]  
+        if(pack.status.treeStatus != StatusEnum.SYNC)
+            uploadChild = {
+                class: "fas fa-cloud-upload-alt fv-hover-text-focus fv-pointer",
+                onclick: (ev:MouseEvent) => {
+                    Backend.uploadPackages.registerAsset(pack.assetId).subscribe();
+                    ev.stopPropagation()
+                }
+            }
+    }
 
     return {
         tag: 'td',
-        class:' d-flex align-items-center justify-content-around',
+        class:'d-flex align-items-center justify-content-around my-auto',
         children:[
             {
-                class: attr$(
-                    libraryStatus$,  //packagesStatus$[d.assetId],
-                    (treeStatus) => treeStatus==StatusEnum.SYNC 
-                        ? statusClassesDict[StatusEnum.SYNC] 
-                        : 'fas fa-times fv-text-error',
-                    { untilFirst: 'fas fa-spinner fa-spin' }
-                )
+                class: classes
             },
-            child$(
-                libraryStatus$,
-                (treeStatus) => {
-                    if(treeStatus==StatusEnum.SYNC)
-                        return {}
-                    return {
-                        class: "fas fa-cloud-upload-alt fv-hover-text-focus fv-pointer",
-                        onclick: (ev:MouseEvent) => {
-                            Backend.uploadPackages.registerAsset(library.assetId).subscribe();
-                            ev.stopPropagation()
-                        }
-                    }
-                }
-            )
+            uploadChild
         ]
     }
 }

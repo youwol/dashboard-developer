@@ -1,6 +1,7 @@
 import { HTMLElement$, VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
 import { BehaviorSubject, Subject } from 'rxjs';
+import { Package } from '../backend/upload-packages.router';
 import { PanelId } from '../panels-info';
 import { detailsView } from './packages/package-details-view';
 import { PackagesState,PackagesView } from './packages/packages-view';
@@ -21,9 +22,9 @@ class PackagesTabData extends Tabs.TabData{
 class PackageTabData extends Tabs.TabData{
 
     constructor(
-        public readonly library: Library, 
+        public readonly library: Package, 
         public readonly packagesState: PackagesState){
-        super(library.libraryName, library.libraryName)
+        super(library.name, library.name)
     }
 
     view() {
@@ -50,16 +51,16 @@ export class AssetsState{
         ])
     }
 
-    addTabUpload( library: Library ) {
+    addTabUpload( library: Package ) {
 
         //this.appState.addTabUpload(name)
-        if( this.tabsData$.getValue().find( tab => tab instanceof PackageTabData && tab.id == library.libraryName))
+        if( this.tabsData$.getValue().find( tab => tab instanceof PackageTabData && tab.id == library.name))
             return 
         this.tabsData$.next([ 
             ...this.tabsData$.getValue(), 
             new PackageTabData(library, this.packagesState) 
         ])
-        this.selectedTab$.next(library.libraryName)
+        this.selectedTab$.next(library.name)
     }
     removeTabUpload( name ) {
         if( this.selectedTab$.getValue() == name )

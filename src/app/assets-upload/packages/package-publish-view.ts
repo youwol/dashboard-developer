@@ -1,14 +1,16 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
 import { combineLatest } from "rxjs";
 import { delay, map } from "rxjs/operators";
+import { PackageVersion } from "src/app/backend/upload-packages.router";
 import { button } from "../../utils-view";
-import { PackagesState } from "./packages-view";
+import { Options, PackagesState } from "./packages-view";
 import { Library,  statusClassesDict, StatusEnum } from "./utils";
 
 
 
 export function publishView(
-    libraries: Array<Library>, 
+    versions: Array<PackageVersion>, 
+    options: Options,
     state: PackagesState
     ) : VirtualDOM {
     
@@ -21,7 +23,7 @@ export function publishView(
         children: [
         {   class:"overflow-auto",
             children:[ 
-                syncTable(libraries, state) 
+                syncTable(versions, options, state) 
             ] 
         },
         {   class: 'd-flex align-items-baseline',
@@ -59,20 +61,11 @@ function syncHeader(selection: Set<string> , state: PackagesState) : VirtualDOM 
 
 
 export function syncTable( 
-    libraries: Array<Library>, 
+    versions: Array<PackageVersion>, 
+    options: Options,
     state: PackagesState
     ) : VirtualDOM {
-
-    let flattenLibraries = libraries.reduce( (acc, library ) => { 
-
-        let versions = library.releases.map( ({version}) => ({
-                assetId: library.assetId,
-                libraryName: library.libraryName,
-                version: version
-            }))
-        return acc.concat(versions)
-    }, [])
-
+        
     return {
         tag: 'table', 
         class:'w-100 text-center',
@@ -90,36 +83,23 @@ export function syncTable(
                 ]
             },
             {   tag:'tbody',
-                children: flattenLibraries.map( ({assetId, libraryName, version}) => {
+                children: versions.map( ({assetId, name, version, status}) => {
+                    let classes = 'fv-pointer fv-hover-bg-background-alt '
+                    if(  (!options.showSynced && status == StatusEnum.SYNC) ||
+                         (!options.showNext && version.includes('-next'))   ){
+                        classes += 'd-none'
+                    }
+
                     return {
                         tag: 'tr',
-                        class: attr$(
-                            combineLatest([state.options$, state.publishStatus$(assetId, version)])
-                            .pipe(
-                                map( ([{showSynced, showNext}, status]) => {
-                                    if(showSynced && showNext)
-                                        return true
-                                    if(!showSynced && status == StatusEnum.SYNC)
-                                        return false
-
-                                    if(!showNext && version.includes('-next'))
-                                        return false
-                                    return true
-                                })
-                                ),
-                            (display) => display ? '' : 'd-none',
-                            { wrapper: (d) => d + ' fv-pointer fv-hover-bg-background-alt'}
-                            ),
+                        class: classes,
                         children: [
-                            {   tag: 'td', innerText:libraryName },
+                            {   tag: 'td', innerText:name },
                             {   tag: 'td', innerText:version },
                             {   tag: 'td',
                                 children:[
                                     {
-                                        class: attr$(
-                                            state.publishStatus$(assetId, version),
-                                            (status) => statusClassesDict[status]
-                                        )
+                                        class: statusClassesDict[status]
                                     }
                                 ]
                             },

@@ -1,32 +1,30 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
 import { Observable } from "rxjs";
-import { Backend } from "../../backend";
+import { Backend } from "../../backend/router";
 import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils";
 import { LogsView } from "../../logs-view";
 import { PackagesState } from "./packages-view";
 import { ExpandableGroup } from "@youwol/fv-group";
-import { mergeMap } from "rxjs/operators";
+import { map, mergeMap, tap } from "rxjs/operators";
+import { Package, PackageVersion } from "src/app/backend/upload-packages.router";
 
 
 
 export function detailsView( 
-    library: Library,  
+    library: Package,  
     packagesState : PackagesState
     ) : VirtualDOM {
     
-    let libraryStatus$ = packagesState.librariesStatus$[library.assetId]
-    
-
     return { 
         class: "h-100 d-flex flex-column w-100 fv-bg-background-alt fv-color-primary",
         children:[
             {
                 class: 'h-100 d-flex flex-column fv-bg-background p-3  overflow-auto',
                 children:[
-                    title(library, libraryStatus$),
+                    title(library),
                     { tag:'hr', class:'w-100 fv-color-primary'},
                     explorerGroup(library),
-                    versionsStatusGroup(library, packagesState)
+                    versionsStatusGroup(library)
                 ]  
             },
             new LogsView(packagesState.logsState)
@@ -35,8 +33,8 @@ export function detailsView(
 }
 
 
-function explorerGroup(library: Library){
-
+function explorerGroup(library: Package){
+    
     let state = new ExpandableGroup.State("Explorer", false)
     let contentView = (state:ExpandableGroup.State) => {
         return {
@@ -98,7 +96,7 @@ function explorerGroup(library: Library){
 }
 
 
-function versionsStatusGroup( library: Library, packagesState: PackagesState ) : VirtualDOM{
+function versionsStatusGroup( library: Package ) : VirtualDOM{
 
     let state = new ExpandableGroup.State("CDN versions", true)
 
@@ -106,7 +104,7 @@ function versionsStatusGroup( library: Library, packagesState: PackagesState ) :
         return {   
             class:'d-flex justify-content-center', 
             children:[ 
-                versionsTable(library, packagesState) 
+                versionsTable(library) 
             ] 
         }
     }
@@ -124,22 +122,22 @@ function headerView(state:ExpandableGroup.State ) {
     return ExpandableGroup.defaultHeaderView(state)
 }
 
-function title(library: Library, libraryStatus$: Observable<LibraryStatus>) : VirtualDOM {
+function title(library: Package/*, libraryStatus$: Observable<LibraryStatus>*/) : VirtualDOM {
 
     return {   
         class: 'd-flex justify-content-center align-items-center ',
         children:[
             {   tag:'h3', 
                 class:'text-center my-2',
-                innerText: library.libraryName
-            },
+                innerText: library.name
+            }/*,
             {
                 class: attr$(
                     libraryStatus$,
                     ({status}) => statusClassesDict[status],
                     {wrapper:(d) => d + ' mx-2 fa-2x'}
                 )
-            }
+            }*/
         ]
     }
 }
@@ -189,8 +187,12 @@ function explorerCard( {group, drive, folders} ) : VirtualDOM {
 }
 
 
-function versionsTable( library: Library, packagesState: PackagesState) : VirtualDOM {
+function versionsTable( library: Package) : VirtualDOM {
 
+    let versions$ = Backend.uploadPackages.packageVersions$.pipe(
+        map( (d) => Object.values(d)),
+        map( (versions: Array<PackageVersion>) => versions.filter( ({name}) => name == library.name))
+    )
     return {
         tag: 'table', 
         class:'fv-color-primary text-center my-3',
@@ -201,62 +203,60 @@ function versionsTable( library: Library, packagesState: PackagesState) : Virtua
                         children: [
                             { tag: 'td', innerText:'Local versions', class:'px-3'},
                             { tag: 'td', innerText:'Published versions', class:'px-3'},
+                            { tag: 'td', innerText:'', class:'px-3'},
                             { tag: 'td', innerText:'', class:'px-3'}
                         ] 
                     }
                 ]
             },
-            {   tag:'tbody',
-                children: library.releases.map( release => {
+            child$( 
+                versions$,
+                (versions) => {
                     return {
-                        tag: 'tr',
-                        class: 'fv-hover-bg-background-alt',
-                        children: [
-                            {   tag: 'td', innerText:release.version, class:'px-3' },
-                            {   tag: 'td', class:'px-3', 
-                                children:[
-                                    {
-                                        tag:'i',
-                                        class: attr$(
-                                            packagesState.publishStatus$(library.assetId,release.version),
-                                            (status) => {
-                                                return statusClassesDict[status]
-                                            },
-                                            {   untilFirst: 'fas fa-spin fa-spinner',
-                                                wrapper: (d) => d + " px-2"
-                                            }
-                                        )
+                        tag:'tbody',
+                        children: versions.map( ({assetId, name, version, status}) => {
+
+                            return {
+                                tag: 'tr',
+                                class: 'fv-hover-bg-background-alt',
+                                children: [
+                                    {   tag: 'td', innerText:version, class:'px-3' },
+                                    {   tag: 'td', class:'px-3', 
+                                        children:[
+                                            {
+                                                tag:'i',
+                                                class: statusClassesDict[status]
+                                            }/*,
+                                            {
+                                                tag:'i',
+                                                class: attr$(
+                                                    packagesState.librariesStatus$[library.assetId],
+                                                    ({status, details}) => {
+                                                        if( !details || details.version != release.version )                                                    
+                                                            return '' 
+                                                        if( status != StatusEnum.PROCESSING || 
+                                                            details.version != release.version )
+                                                            return ''
+                                                        if( details.version == release.version )                                                    
+                                                            return 'fas fa-spin fa-spinner'     
+                                                    }
+                                                )
+                                            }*/
+                                        ]
                                     },
-                                    {
-                                        tag:'i',
-                                        class: attr$(
-                                            packagesState.librariesStatus$[library.assetId],
-                                            ({status, details}) => {
-                                                if( !details || details.version != release.version )                                                    
-                                                    return '' 
-                                                if( status != StatusEnum.PROCESSING || 
-                                                    details.version != release.version )
-                                                    return ''
-                                                if( details.version == release.version )                                                    
-                                                    return 'fas fa-spin fa-spinner'     
-                                            }
-                                        )
-                                    }
+                                    publishPackageVersionBtn(library, version),
+                                    deletePackageVersionBtn(library, version)
                                 ]
-                            },
-                            child$( 
-                                packagesState.librariesStatus$[library.assetId],
-                                () =>  publishPackageVersionBttn(library, release.version)
-                            )
-                        ]
+                            }
+                        })
                     }
-                })
-            }
+                }
+            )
         ]
     } 
 }
 
-function publishPackageVersionBttn( library: Library, version: string) : VirtualDOM {
+function btnBaseView(onclick: ()=>void, faClass: string){
 
     return {
         tag: 'td',
@@ -264,11 +264,29 @@ function publishPackageVersionBttn( library: Library, version: string) : Virtual
         children:[
             {
                 tag:'i',
-                class: 'fas fa-cloud-upload-alt fv-hover-text-focus p-2 fv-pointer',
-                onclick: () => 
-                    Backend.uploadPackages.publishLibraryVersion$(library.assetId, version).subscribe()
+                class: `fas ${faClass} fv-hover-text-focus p-2 fv-pointer`,
+                onclick
             },
             {}
         ]
-    }
+    } 
+}
+
+
+function publishPackageVersionBtn( library: Package, version: string) : VirtualDOM {
+
+    return btnBaseView( 
+        () =>  Backend.uploadPackages.publishLibraryVersion$(library.assetId, version).subscribe(),
+        "fa-cloud-upload-alt")
+}
+
+function deletePackageVersionBtn( library: Package, version: string) : VirtualDOM {
+    return btnBaseView( 
+        () => {
+            if(confirm(`Are you sure you want to remove ${library.name}/${version} from local & deployed CDN`))
+                Backend.uploadPackages.deleteLibraryVersion$(library.assetId, version).pipe( 
+                    mergeMap( () =>Backend.uploadPackages.status$())
+                ).subscribe()
+        },
+        "fa-trash fv-text-error ml-4")
 }

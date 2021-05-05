@@ -8,6 +8,8 @@ import { LogsState, LogsView } from "../../logs-view";
 import { filter, map, mergeMap, tap } from "rxjs/operators";
 import { Switch } from "@youwol/fv-button";
 import { ExpandableGroup } from "@youwol/fv-group";
+import { Package } from "src/app/backend/upload-packages.router";
+import { detailsView } from "./package-details-view";
 
 
 export interface Options{
@@ -27,11 +29,6 @@ export class PackagesState{
 
     webSocket$: Subject<any> = Backend.uploadPackages.connectWs()
 
-    libraries$ = new BehaviorSubject<Array<Library>>([])
-
-    librariesStatus$ : { [key:string]: ReplaySubject<LibraryStatus> } = {}  
-    releasesStatus$ : { [key:string]: { [key:string]:ReplaySubject<StatusEnum> } } = {} 
-
     syncQueued$ = new BehaviorSubject<Set<string>>(new Set())
     underSynchronization$ = new BehaviorSubject<Set<string>>(new Set())
 
@@ -43,103 +40,11 @@ export class PackagesState{
 
     constructor( public readonly appState){
     }
-
+    
     subscribe() {
-
-        let s1 = Backend.environment.environments$.pipe( 
-            mergeMap( () => Backend.uploadPackages.status$())
-        ).subscribe( ({libraries}:{libraries:Array<Library>}) => {
-            
-            libraries.forEach( (asset: Library) => {
-                this.librariesStatus$[asset.assetId] = new ReplaySubject() 
-                this.releasesStatus$[asset.assetId] = {}
-            })
-
-            libraries
-            .reduce( (acc,{assetId, releases}) => acc.concat(releases.map( ({version}) => ({ assetId, version }))), [])
-            .map( ({assetId,version}) => {
-                this.releasesStatus$[assetId][version] = new ReplaySubject()
-            })
-            this.libraries$.next(libraries)
-        })
-        let messages$ = Backend.environment.environments$.pipe( 
-            mergeMap( () => this.webSocket$)
-        )
-        // this is a message related to a library version
-        let s2 = messages$.pipe( 
-            filter( m => m.assetId && m.status && m.details && m.version) 
-        )
-        .subscribe( ({assetId, version, status}) => {
-
-            this.releasesStatus$[assetId][version].next(status)
-
-            if(status==StatusEnum.PROCESSING){
-                // remove the checkbox's 'checked' status
-                if(this.syncQueued$.getValue().has(assetId+"#"+version))
-                    this.toggleSync(assetId, version)
-                let underSync = this.underSynchronization$.getValue()
-                underSync.add( assetId+"#"+version)
-                this.underSynchronization$.next(underSync)
-            }
-            if(status==StatusEnum.DONE){
-                let underSync = this.underSynchronization$.getValue()
-                underSync.delete( assetId+"#"+version)
-                this.underSynchronization$.next(underSync)
-            }
-        })
-
-        // this is a message related to a package (all version of a library)
-        let s3 = combineLatest([
-            messages$.pipe( filter( m => m.assetId && m.status && m.details && !m.version) ),
-            this.libraries$.pipe( filter( m => m.length > 0) )
-        ])
-        .subscribe( ([message, _ ]: [LibraryStatus, any]) => {
-
-            let {assetId, status, details} = message
-            this.librariesStatus$[assetId].next(message)
-
-            if( status == StatusEnum.NOT_FOUND ){
-                         
-                Object
-                .values(this.releasesStatus$[assetId])
-                .forEach( s$ => s$.next(StatusEnum.NOT_FOUND) ) 
-            }
-            if( status == StatusEnum.SYNC )  {          
-                Object
-                .values(this.releasesStatus$[assetId])
-                .forEach( s$ => s$.next(StatusEnum.SYNC) ) 
-            }
-            if( status == StatusEnum.MISMATCH ) {
-                
-                Object
-                .entries(this.releasesStatus$[assetId])
-                .forEach( ([k,s$]) =>{    
-
-                    if(details.missing.includes(k))
-                        s$.next(StatusEnum.NOT_FOUND) 
-                    if(details.mismatch.includes(k))
-                        s$.next(StatusEnum.MISMATCH)     
-                    if(details.sync.includes(k))
-                        s$.next(StatusEnum.SYNC)  
-                }) 
-            }
-        })
-        return [s1, s2, s3]
-    }
-
-    publishStatus$(assetId:string, version: string) {
-
-        return combineLatest( [
-            this.releasesStatus$[assetId][version],
-            this.underSynchronization$
-        ]).pipe( 
-            map( ([status, underSync]) => {
-                if(underSync.has(assetId+"#"+version))
-                    return StatusEnum.PROCESSING
-                return status
-            })
-        )
-    }
+        Backend.uploadPackages.status$().subscribe()
+        return []
+    }    
 
     toggleSync( assetId: string, version: string) {
 
@@ -179,22 +84,18 @@ export class PackagesView implements VirtualDOM{
 
     connectedCallback: (elem) => void
 
-    selected$ = new ReplaySubject<Library>()
+    selected$ = new ReplaySubject<Package>()
 
     constructor( state : PackagesState ){
         
         this.state = state
-        
         
         this.children = [
             {
                 class: "h-75 d-flex flex-column w-100 fv-bg-background py-3",
                 children:[
                     this.headerView(),
-                    child$(
-                        this.state.libraries$,
-                        (libraries) => this.contentView(libraries)
-                    ),
+                    this.contentView()
                 ]
             },
             new LogsView(state.logsState)
@@ -239,24 +140,26 @@ export class PackagesView implements VirtualDOM{
         } as any)
         return groupView
     }
-    contentView( libraries: Array<Library> ) : VirtualDOM { 
+
+    contentView() : VirtualDOM { 
 
         return {
             class: "h-100 flex-grow-1",style:{"min-height":"0px"},
             children:[
                 {   class:'d-flex w-100 h-100 justify-content-around',
                     children:[
-                        tableView( libraries,  this.selected$ , this.state),
+                        child$(
+                            combineLatest([Backend.uploadPackages.packages$, this.state.options$]),
+                            ([packages, options]) => {
+                                return tableView( Object.values(packages), options,  this.selected$ , this.state)
+                            }
+                        ),
                         child$( 
-                            this.state.libraries$,
-                            (libraries) => publishView(libraries, this.state) 
+                            combineLatest([Backend.uploadPackages.packageVersions$, this.state.options$]),
+                            ([packages, options]) => publishView(Object.values(packages), options, this.state) 
                         )
                     ]
-                },
-                /*child$( 
-                    this.selected$,
-                    (selected) => detailsView(selected, this.state.librariesStatus$[selected.assetId]) 
-                )*/
+                }
             ]
         }
     }
