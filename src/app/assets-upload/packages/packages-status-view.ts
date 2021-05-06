@@ -1,11 +1,10 @@
-import { attr$, child$, VirtualDOM } from "@youwol/flux-view"
-import { combineLatest, merge, Observable, Subject } from "rxjs"
-import { delay, filter, map } from "rxjs/operators"
-import { Package, PackageStatus, ProcessingPackage, ResolvedPackage } from '../../backend/upload-packages.router'
+import { VirtualDOM } from "@youwol/flux-view"
+import { Subject } from "rxjs"
+import { Package, ProcessingPackage, ResolvedPackage, StatusEnum } from '../../backend/upload-packages.router'
 import { Backend } from "../../backend/router"
 import { Options, PackagesState } from "./packages-view"
 
-import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils"
+import { statusClassesDict } from "./utils"
 
 
 export function tableView(

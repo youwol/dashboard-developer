@@ -1,10 +1,8 @@
 import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
-import { combineLatest } from "rxjs";
-import { delay, map } from "rxjs/operators";
-import { PackageVersion } from "src/app/backend/upload-packages.router";
+import { PackageVersion, StatusEnum } from "../../backend/upload-packages.router";
 import { button } from "../../utils-view";
 import { Options, PackagesState } from "./packages-view";
-import { Library,  statusClassesDict, StatusEnum } from "./utils";
+import { statusClassesDict } from "./utils";
 
 
 

@@ -1,11 +1,10 @@
-import { attr$, child$, VirtualDOM } from "@youwol/flux-view";
-import { Observable } from "rxjs";
+import { child$, VirtualDOM } from "@youwol/flux-view";
 import { Backend } from "../../backend/router";
-import { Library, LibraryStatus, statusClassesDict, StatusEnum } from "./utils";
+import { statusClassesDict } from "./utils";
 import { LogsView } from "../../logs-view";
 import { PackagesState } from "./packages-view";
 import { ExpandableGroup } from "@youwol/fv-group";
-import { map, mergeMap, tap } from "rxjs/operators";
+import { map, mergeMap } from "rxjs/operators";
 import { Package, PackageVersion } from "src/app/backend/upload-packages.router";
 
 
