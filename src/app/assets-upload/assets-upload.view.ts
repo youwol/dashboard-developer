@@ -33,7 +33,7 @@ class PackageTabData extends Tabs.TabData{
     }
 }
 
-export class AssetsState{
+export class AssetsUploadState{
     
     public readonly packagesState: PackagesState
     
@@ -71,12 +71,12 @@ export class AssetsState{
 
 class AssetsTabsState extends Tabs.State{
 
-    constructor(public readonly assetsState: AssetsState){
+    constructor(public readonly assetsState: AssetsUploadState){
         super(assetsState.tabsData$, assetsState.selectedTab$)
     }
 }
 
-export class AssetsView implements VirtualDOM{
+export class AssetsUploadView implements VirtualDOM{
 
     public readonly tag = 'div'
     public readonly children : Array<VirtualDOM> 
@@ -84,7 +84,7 @@ export class AssetsView implements VirtualDOM{
 
     connectedCallback: (elem) => void
     
-    constructor(state:AssetsState){
+    constructor(state:AssetsUploadState){
         
         let tabsState = new AssetsTabsState(state)
         this.children = [
