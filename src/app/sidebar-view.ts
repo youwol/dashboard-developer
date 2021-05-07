@@ -62,9 +62,8 @@ export class SideBarView implements VirtualDOM{
                     sectionGeneric(
                         'Download assets',
                         'fas fa-cloud-download-alt my-2',
-                        new BehaviorSubject([]),
-                        this.state.selected$,
-                        false
+                        this.state.downloadChildren$,
+                        this.state.selected$
                     ),
                     sectionResources()
                 ]
@@ -150,7 +149,9 @@ function sectionTitle(
         tag: 'ul',
         children: children$(
             targets$,
-            (targets) => targets.map( panelId =>  tabSubSection(panelId, selected$) )
+            (targets) => {
+                return targets.map( panelId =>  tabSubSection(panelId, selected$) ) 
+            }
         )
     }
  }

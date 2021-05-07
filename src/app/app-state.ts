@@ -1,6 +1,7 @@
 import { BehaviorSubject } from "rxjs"
 import { map } from "rxjs/operators"
-import { AssetsState, AssetsView } from "./assets-upload/assets-upload.view"
+import { AssetsDownloadState, AssetsDownloadView } from "./assets-download/assets-download.view"
+import { AssetsUploadState, AssetsUploadView } from "./assets-upload/assets-upload.view"
 import { ConfigurationState, ConfigurationView } from "./environment/environment.view"
 import { LocalState, LocalView } from "./local/local-view"
 import { PanelId, tabsDisplayInfo } from "./panels-info"
@@ -10,12 +11,14 @@ export class AppState{
     public readonly environmentChildren$ = new BehaviorSubject([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile])
     public readonly localChildren$ = new BehaviorSubject([PanelId.LocalEnvPackage,PanelId.LocalEnvFronts,PanelId.LocalEnvBacks])
     public readonly uploadChildren$ = new BehaviorSubject([PanelId.AssetsUploadPackages])
+    public readonly downloadChildren$ = new BehaviorSubject([PanelId.AssetsDownloadPackages])
 
 
     public readonly selected$ = new BehaviorSubject<PanelId>(PanelId.ConfigurationGeneral)
 
     localState = new LocalState(this.selected$)
-    assetsState = new AssetsState(this.selected$)
+    assetsUploadState = new AssetsUploadState(this.selected$)
+    assetsDownloadState = new AssetsDownloadState(this.selected$)
     configurationState = new ConfigurationState(this.selected$)
 
     panelViewFactory$ = this.selected$.pipe(
@@ -25,10 +28,13 @@ export class AppState{
                 return new LocalView(this.localState)
             }
             if ([PanelId.AssetsUploadPackages].includes(selected)){
-                return new AssetsView(this.assetsState)
+                return new AssetsUploadView(this.assetsUploadState)
             }
             if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){
                 return new ConfigurationView(this.configurationState)
+            }
+            if ([PanelId.AssetsDownloadPackages].includes(selected)){
+                return new AssetsDownloadView(this.assetsDownloadState) 
             }
         })
     )

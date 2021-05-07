@@ -12,6 +12,7 @@ export enum PanelId{
     AssetsUploadFluxApp = "upload.fluxapp",
     AssetsUploadData = "upload.fluxdata",
     AssetsUploadPackage = "upload.AssetsUploadPackage",
+    AssetsDownloadPackages = "download.packages",
 }
 
 export let tabsDisplayInfo = {
@@ -23,5 +24,6 @@ export let tabsDisplayInfo = {
     [PanelId.AssetsUploadPackages]: { title: "Packages", enabled: true},
     [PanelId.AssetsUploadFluxApp]: { title: "Flux app", enabled: false},
     [PanelId.AssetsUploadData]: { title: "Data", enabled: false},
+    [PanelId.AssetsDownloadPackages]: { title: "Packages", enabled: true},
 }
 
