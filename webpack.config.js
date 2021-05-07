@@ -52,15 +52,10 @@ module.exports = {
         '@youwol/fv-tree':"window['@youwol/fv-tree']",
         '@youwol/fv-input':"window['@youwol/fv-input']",
         '@youwol/fv-button':"window['@youwol/fv-button']",    
-        '@youwol/fv-tabs':"window['@youwol/fv-tabs']"        
-    }/*,
-    {
-        'rxjs/operators': {
-            commonjs:'rxjs/operators',
-            commonjs2:'rxjs/operators',
-            root:['rxjs','operators']
-        }
-    }*/],
+        '@youwol/fv-tabs':"window['@youwol/fv-tabs']",           
+        '@youwol/flux-youwol-essentials':"window['@youwol/flux-youwol-essentials']",    
+        '@youwol/flux-files':"window['@youwol/flux-files']"     
+    }],
     module: {
         rules: [
             /****************
