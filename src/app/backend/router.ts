@@ -3,6 +3,7 @@ import { BacksRouter } from "./backend.router";
 import { DownloadPackagesRouter } from "./download-packages.router";
 import { EnvironmentRouter } from "./environment.router";
 import { FrontsRouter } from "./front.router";
+import { LocalCdnRouter } from "./local-cdn.router";
 import { PackagesRouter } from "./packages.router";
 import { SystemRouter } from "./system.router";
 import { UploadPackagesRouter } from "./upload-packages.router";
@@ -35,6 +36,7 @@ export class Backend {
         EnvironmentRouter.headers=headers
         UploadPackagesRouter.headers=headers
         DownloadPackagesRouter.headers=headers
+        LocalCdnRouter.headers=headers
     }
     
     static system = SystemRouter
@@ -44,4 +46,5 @@ export class Backend {
     static environment = EnvironmentRouter
     static uploadPackages = UploadPackagesRouter
     static downloadPackages = DownloadPackagesRouter
+    static localCdnPackages = LocalCdnRouter
 }

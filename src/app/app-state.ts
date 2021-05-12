@@ -8,10 +8,22 @@ import { PanelId, tabsDisplayInfo } from "./panels-info"
 
 export class AppState{
 
-    public readonly environmentChildren$ = new BehaviorSubject([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile])
-    public readonly localChildren$ = new BehaviorSubject([PanelId.LocalEnvPackage,PanelId.LocalEnvFronts,PanelId.LocalEnvBacks])
-    public readonly uploadChildren$ = new BehaviorSubject([PanelId.AssetsUploadPackages])
-    public readonly downloadChildren$ = new BehaviorSubject([PanelId.AssetsDownloadPackages])
+    public readonly environmentChildren$ = new BehaviorSubject([
+        PanelId.ConfigurationGeneral, 
+        PanelId.ConfigurationRawFile
+    ])
+    public readonly localChildren$ = new BehaviorSubject([
+        PanelId.LocalEnvPackage,
+        PanelId.LocalEnvFronts,
+        PanelId.LocalEnvBacks,
+        PanelId.LocalEnvCDN
+    ])
+    public readonly uploadChildren$ = new BehaviorSubject([
+        PanelId.AssetsUploadPackages
+    ])
+    public readonly downloadChildren$ = new BehaviorSubject([
+        PanelId.AssetsDownloadPackages
+    ])
 
 
     public readonly selected$ = new BehaviorSubject<PanelId>(PanelId.ConfigurationGeneral)
@@ -24,7 +36,7 @@ export class AppState{
     panelViewFactory$ = this.selected$.pipe(
         map( selected => {
     
-            if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks].includes(selected)){
+            if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks, PanelId.LocalEnvCDN].includes(selected)){
                 return new LocalView(this.localState)
             }
             if ([PanelId.AssetsUploadPackages].includes(selected)){

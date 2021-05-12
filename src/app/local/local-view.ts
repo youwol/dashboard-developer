@@ -5,6 +5,7 @@ import { ModulesState, ModulesView } from './modules-view'
 import { BackendsState, BackendsView } from './backends-view'
 import { BehaviorSubject, Subject } from 'rxjs'
 import { PanelId } from '../panels-info'
+import { CdnState, CdnView } from './cdn-view'
 
 
 
@@ -13,6 +14,7 @@ let titles = {
     [PanelId.LocalEnvPackage] :'Packages',
     [PanelId.LocalEnvFronts] : 'Front Ends',
     [PanelId.LocalEnvBacks] : 'Back Ends',
+    [PanelId.LocalEnvCDN] : 'CDN',
 }
 export class LocalState{
 
@@ -21,6 +23,7 @@ export class LocalState{
     modulesState = new ModulesState()
     frontendsState = new FrontendsState()
     backendsState = new BackendsState()
+    cdnState = new CdnState()
 
     
     constructor(public readonly selectedPanel$: BehaviorSubject<PanelId>){}
@@ -48,11 +51,21 @@ class FrontEndsTabData extends Tabs.TabData{
 
 class BackendsTabData extends Tabs.TabData{
 
-    constructor(public readonly backendsState){
+    constructor(public readonly backendsState: BackendsState){
         super(PanelId.LocalEnvBacks, titles[PanelId.LocalEnvBacks])
     }
     view() {
         return new BackendsView(this.backendsState)
+    }
+}
+
+class CdnTabData extends Tabs.TabData{
+
+    constructor(public readonly cdnState: CdnState){
+        super(PanelId.LocalEnvCDN, titles[PanelId.LocalEnvCDN])
+    }
+    view() {
+        return new CdnView(this.cdnState)
     }
 }
 
@@ -69,6 +82,7 @@ export class LocalView implements VirtualDOM{
             new ModulesTabData(state.modulesState),
             new FrontEndsTabData(state.frontendsState),
             new BackendsTabData(state.backendsState),
+            new CdnTabData(state.cdnState),
         ]
         
         this.children = [

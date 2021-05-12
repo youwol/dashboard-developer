@@ -1,11 +1,11 @@
 import { VirtualDOM, child$, attr$, children$ } from '@youwol/flux-view'
 import { Select } from '@youwol/fv-input'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
-import { distinctUntilChanged, filter, map, mergeMap, skip, tap } from 'rxjs/operators'
+import { distinctUntilChanged, map, mergeMap, skip } from 'rxjs/operators'
 import { AppState } from './app-state'
 import { Backend } from './backend/router'
 import { GeneralState } from './environment/general.view'
-import { Environment, instanceOfEnvironment } from './environment/models'
+import { Environment } from './environment/models'
 import { syncUserModal } from './environment/user-info.view'
 import { PanelId, tabsDisplayInfo } from './panels-info'
 
