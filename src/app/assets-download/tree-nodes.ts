@@ -2,7 +2,7 @@ import { Interfaces, ModuleExplorer } from "@youwol/flux-files"
 import { AssetsGatewayClient, Drive } from "@youwol/flux-youwol-essentials"
 import { ImmutableTree } from "@youwol/fv-tree"
 import { ReplaySubject, Subject } from "rxjs"
-import { map } from "rxjs/operators"
+import { filter, map } from "rxjs/operators"
 import { Group } from "../backend/download-packages.router"
 import { Backend } from "../backend/router"
 
@@ -13,7 +13,8 @@ export class RootNode extends ModuleExplorer.Node{
     static events$ = new ReplaySubject<Interfaces.EventIO>()
     
     static groups$() {
-        return AssetsGatewayClient.getGroups(RootNode.events$).pipe(
+        let assetsGtwClient = new AssetsGatewayClient({basePath:`/remote/api/assets-gateway`})
+        return assetsGtwClient.getGroups(RootNode.events$).pipe(
             map(({groups}: {groups:Array<Group>}) => {
                 return groups.map( group => new GroupNode({group}))
             }) 
@@ -32,12 +33,14 @@ export class GroupNode extends ModuleExplorer.Node{
 
     public readonly group: Group
     public readonly name: string
+    static events$ = new ReplaySubject<Interfaces.EventIO>()
 
     static drives$(groupId: string) {
-        return Backend.downloadPackages.getDrives$(groupId).pipe(
-            map((drives) => {
+        let assetsGtwClient = new AssetsGatewayClient({basePath:`/remote/api/assets-gateway`})
+        return assetsGtwClient.getDrives(groupId, GroupNode.events$).pipe(
+            map(({drives}) => {
                 return drives.map( ({driveId,name}) => {
-                    let drive = new Drive(driveId,name)
+                    let drive = new Drive(driveId, name, assetsGtwClient)
                     return new ModuleExplorer.DriveNode({drive}) 
                 })
             })
@@ -48,7 +51,8 @@ export class GroupNode extends ModuleExplorer.Node{
         super({ 
             id: group.id, 
             name:  group.path, 
-            children: GroupNode.drives$(group.id)
+            children: GroupNode.drives$(group.id),
+            events$: GroupNode.events$.pipe(filter( event => event.targetId == group.id))
         })
         this.group = group
         this.name = group.path

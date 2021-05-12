@@ -5,10 +5,10 @@ import { BehaviorSubject, combineLatest, Observable, ReplaySubject, Subject, Sub
 import { filter, map, mergeMap, take, tap } from "rxjs/operators"
 import { Backend } from "../backend/router"
 import { LogsState, LogsView } from "../logs-view"
-import {AssetsGatewayClient, Drive, File as FileYW} from '@youwol/flux-youwol-essentials'
+import { File as FileYW} from '@youwol/flux-youwol-essentials'
 import { ImmutableTree } from "@youwol/fv-tree"
-import { ModuleExplorer } from "@youwol/flux-files"
-import { RootNode } from "./tree-nodes"
+import { Interfaces, ModuleExplorer } from "@youwol/flux-files"
+import { GroupNode, RootNode } from "./tree-nodes"
 import { DownloadItem } from "../backend/download-packages.router"
 import { statusClassesDict } from "../assets-upload/packages/utils"
 import { StatusEnum } from "../backend/upload-packages.router"
@@ -45,7 +45,6 @@ export class PackagesState{
     public readonly toggled$ = new BehaviorSubject<string[]>([])
 
     constructor(){
-        AssetsGatewayClient.basePath = `/remote${AssetsGatewayClient.basePath}`
         this.selectedNode$.pipe(
             filter( node => node instanceof ModuleExplorer.FileNode && 
                 node.file instanceof FileYW && node.file.metadata.kind == 'package' ),
@@ -161,7 +160,7 @@ export class PackagesView implements VirtualDOM{
                 {   class:'d-flex w-100 h-100 justify-content-around',
                     children:[
                         child$(
-                            Backend.downloadPackages.connectWs().pipe(take(1)),
+                            Backend.downloadPackages.status$(),
                             () => remoteExplorerView(this.state),
                             { untilFirst: { class: "fas fa-spinner fa-spin"} }
                             ),
@@ -207,34 +206,25 @@ function remoteExplorerView(state: PackagesState): VirtualDOM{
     }
 }
 
-function treeItemView(state: ImmutableTree.State<ImmutableTree.Node>, node: ImmutableTree.Node) {
+function treeItemView(state: ImmutableTree.State<ModuleExplorer.Node>, node: ModuleExplorer.Node) {
 
-    if(node instanceof ModuleExplorer.FileNode && node.file['metadata'].kind == 'package'){
-        
-        return {
-            class:'d-flex align-items-center fv-pointer',
-            children:[ 
-                {
-                    class:'fas fa-cloud-download-alt fv-hover-text-focus'
-                },
-                {
-                    innerText:node['name'], 
-                    class:'px-2'}
-            ]
+    let customHeadersView = [
+        {
+            target: ( n : ModuleExplorer.Node) => n instanceof ModuleExplorer.FileNode && n.file['metadata'].kind == 'package',
+            classes: 'd-flex align-items-center fv-pointer',
+            icon: 'fas fa-cloud-download-alt'
+        },
+        {   target: ( n : ModuleExplorer.Node) => n instanceof ModuleExplorer.FileNode,
+            classes: 'd-flex align-items-center fv-pointer fv-text-disabled',
+        },
+        {   target: ( n : ModuleExplorer.Node) => n instanceof GroupNode && n.id.includes('private'),
+            icon: 'fas fa-user',
+        },
+        {   target: ( n : ModuleExplorer.Node) => (n instanceof RootNode) || (n instanceof GroupNode && !n.id.includes('private')) ,
+            icon: 'fas fa-users',
         }
-    }
-    if(node instanceof ModuleExplorer.FileNode){
-        let defaultView = ModuleExplorer.headerView(state as any, node)
-        defaultView.class += " fv-text-disabled"
-        return defaultView
-    }
-        
-    if(node instanceof ModuleExplorer.Node)
-        return ModuleExplorer.headerView(state as any, node)
-
-    return {
-        innerText:node['name']
-    }
+    ]
+    return  ModuleExplorer.headerView(state as any, node, customHeadersView)
 }
 
 function detailsView(state: PackagesState): VirtualDOM{
