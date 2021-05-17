@@ -1,5 +1,5 @@
-import { BehaviorSubject, merge, ReplaySubject, Subject } from "rxjs";
-import { mergeMap, scan, tap } from "rxjs/operators";
+import { BehaviorSubject, combineLatest, merge, ReplaySubject, Subject } from "rxjs";
+import { map, mergeMap, scan, take, tap } from "rxjs/operators";
 import { EnvironmentRouter } from "./environment.router";
 import { createObservableFromFetch } from "./router";
 
@@ -122,12 +122,9 @@ export class UploadPackagesRouter{
         UploadPackagesRouter.webSocket$ = new Subject()
         var ws = new WebSocket(`ws://${window.location.host}${UploadPackagesRouter.urlBase}/ws`);
 
-        EnvironmentRouter.environments$.pipe(
-            mergeMap( () => this.status$() )
-        ).subscribe()
-
         ws.onmessage = (event) => {
             let data = JSON.parse(event.data)
+
             UploadPackagesRouter.webSocket$.next(data)
             if(data.target && data.target == 'package') 
                 UploadPackagesRouter.package$.next(new Package(data))
@@ -165,7 +162,13 @@ export class UploadPackagesRouter{
         this.packageVersion$.next(undefined)
         let url = `${UploadPackagesRouter.urlBase}/status`
         let request = new Request(url, { method: 'GET', headers: UploadPackagesRouter.headers })
-        return createObservableFromFetch(request)
+        let status$ = combineLatest([
+            UploadPackagesRouter.webSocket$.pipe(take(1)),
+            createObservableFromFetch(request)
+        ]).pipe(
+            map( ([_,status])  => status )
+        )
+        return status$
     } 
 
     static path$(treeId: string) {

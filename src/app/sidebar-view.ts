@@ -74,21 +74,7 @@ export class SideBarView implements VirtualDOM{
 }
 
 function loginView(environment: Environment){
-
-    let items = environment.remotesInfo.map( ({host}) => new Select.ItemData(host, host)) 
-
-    let selected$ = new BehaviorSubject(environment.remoteGatewayInfo.host)    
     
-    let selectState = new Select.State(items, selected$ )
-    selectState.selectionId$.pipe(
-        skip(1),
-        distinctUntilChanged(),
-        mergeMap( (name) => {
-            return Backend.environment.selectRemoteGateway$({name}) 
-        })
-    ).subscribe(() => {})
-
-
     return {
         class:'mb-5',
         children:[
@@ -107,9 +93,11 @@ function loginView(environment: Environment){
             {   class:'d-flex align-items-center justify-content-center',
                 children: [
                     {
-                        class: "fas fa-wifi " + (environment.remoteGatewayInfo.connected ? "fv-text-success" : "fv-text-error")
+                        class: "fas fa-wifi px-2 " + (environment.remoteGatewayInfo.connected ? "fv-text-success" : "fv-text-error")
                     },
-                    new Select.View({state:selectState, class:'mx-2'} as any)
+                    {
+                        innerText: environment.remoteGatewayInfo.host
+                    }
                 ]
             }
             
