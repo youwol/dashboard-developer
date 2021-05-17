@@ -47,7 +47,7 @@ export interface Environment {
 
 export function instanceOfEnvironment(object: any): object is Environment{
 
-    return object.configurationPath && object.configurationParameters && object.userInfo && object.users &&
+    return object.configurationPath && object.userInfo && object.users &&
     object.configuration && object.remoteGatewayInfo && object.remotesInfo
 
 }
