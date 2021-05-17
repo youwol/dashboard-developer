@@ -53,8 +53,10 @@ export class LocalCdnRouter{
             let data = JSON.parse(event.data)
             LocalCdnRouter.webSocket$.next(data)
 
-            if(data.target && data.target == 'PackagesStatus') 
+            if(data.target && data.target == 'PackagesStatus') {
                 LocalCdnRouter.packagesStatus$.next( data['cdnStatus'] as PackagesStatus)
+                LocalCdnRouter.packageDetails$.next(undefined)
+            }
             
             if(data.target && data.target == 'PackageDetails') 
                 LocalCdnRouter.packageDetails$.next( data['packageDetails'] as PackageDetails)

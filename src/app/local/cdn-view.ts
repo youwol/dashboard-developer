@@ -53,7 +53,7 @@ export class CdnView implements VirtualDOM {
                     ),
                     child$(
                         this.state.packageDetails$,
-                        (details) => this.packageDetails(details)
+                        (details) => details ? this.packageDetails(details) : {}
                     )
                 ]
             }
