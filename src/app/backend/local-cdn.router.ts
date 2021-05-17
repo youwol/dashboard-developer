@@ -78,7 +78,13 @@ export class LocalCdnRouter{
     } 
 
     static deleteVersion$(name, version){
-        let url = `${LocalCdnRouter.urlBase}/packages/${name}/${version}`
+        let url = `${LocalCdnRouter.urlBase}/libraries/${name}/${version}`
+        let request = new Request(url, { method: 'DELETE', headers: LocalCdnRouter.headers })
+        return createObservableFromFetch(request) as Observable<PackagesStatus> 
+    }
+
+    static deletePackage$(name){
+        let url = `${LocalCdnRouter.urlBase}/packages/${name}`
         let request = new Request(url, { method: 'DELETE', headers: LocalCdnRouter.headers })
         return createObservableFromFetch(request) as Observable<PackagesStatus> 
     }

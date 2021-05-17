@@ -82,7 +82,8 @@ export class CdnView implements VirtualDOM {
                                     children: [
                                         { tag: 'td', innerText: 'Name', class: 'px-2' },
                                         { tag: 'td', innerText: 'Version count', class: 'px-2' },
-                                        { tag: 'td', innerText: 'Latest version', class: 'px-2' }
+                                        { tag: 'td', innerText: 'Latest version', class: 'px-2' },
+                                        { tag: 'td', innerText: '', class: 'px-2' }
                                     ]
                                 }
                             ]
@@ -97,7 +98,8 @@ export class CdnView implements VirtualDOM {
                                         children: [
                                             nameCell(library),
                                             versionsCountCell(library),
-                                            latestVersionCell(library)
+                                            latestVersionCell(library),
+                                            deletePackageCell(library.name)
                                         ],
                                         onclick: () => this.state.getPackageDetails(library.name)
                                     }
@@ -147,7 +149,7 @@ export class CdnView implements VirtualDOM {
                                             { tag: 'td', innerText: packVersion.version, class: 'px-2' },
                                             { tag: 'td', innerText: packVersion.filesCount, class: 'px-2' },
                                             { tag: 'td', innerText: Math.floor(packVersion.bundleSize/100) /10, class: 'px-2' },
-                                            deleteCell(pack.name, packVersion.version)
+                                            deleteVersionCell(pack.name, packVersion.version)
                                         ]
                                     }
                                 })
@@ -175,13 +177,26 @@ function latestVersionCell(library: Package) {
     return { tag: 'td', innerText: library.versions[0].version, class: 'px-2' }
 }
 
-function deleteCell(name: string, version: string) {
+function deleteVersionCell(name: string, version: string) {
     return { tag: 'td', children:[
         {
             class:'fas fa-trash fv-text-error px-2 fv-pointer',
             onclick:() => {
                 if(confirm(`Are you sure you want to remove ${name}@${version} from local CDN`))
                     Backend.localCdnPackages.deleteVersion$(name, version).subscribe()
+            }
+        }
+        ]
+    }
+}
+
+function deletePackageCell(name: string) {
+    return { tag: 'td', children:[
+        {
+            class:'fas fa-trash fv-text-error px-2 fv-pointer',
+            onclick:() => {
+                if(confirm(`Are you sure you want to remove ${name} (all versions) from local CDN`))
+                    Backend.localCdnPackages.deletePackage$(name).subscribe()
             }
         }
         ]
