@@ -2,11 +2,39 @@ import { ReplaySubject } from "rxjs"
 import { Environment, instanceOfEnvironment } from "../environment/models"
 import { createObservableFromFetch } from "./router"
 
+
+export enum ComponentUpdateStatus{
+    PENDING = "PENDING",
+    SYNC = "SYNC",
+    OUTDATED = "OUTDATED"
+}
+
+
+export interface ComponentUpdate{
+    name:string, 
+    localVersion: string
+    latestVersion: string
+    status: ComponentUpdateStatus
+}
+
+export interface ComponentsUpdate{
+
+    status: ComponentUpdateStatus
+    components: ComponentUpdate[]
+}
+
+export function instanceOfComponentUpdates(object: any): object is ComponentsUpdate{
+
+    return object.status && object.components
+}
+
+
 export class EnvironmentRouter{
 
     private static urlBase = '/admin/environment'
     private static webSocket$ : ReplaySubject<any> 
     public static environments$ = new ReplaySubject<Environment>(1)
+    public static componentsUpdates$ = new ReplaySubject<ComponentsUpdate>(1)
     static headers = {}
 
     static connectWs(){
@@ -19,8 +47,12 @@ export class EnvironmentRouter{
         ws.onmessage = (event) => {
             let d = JSON.parse(event.data)
             EnvironmentRouter.webSocket$.next(d)
+
             if(instanceOfEnvironment(d))
                 EnvironmentRouter.environments$.next(d) 
+
+            if(instanceOfComponentUpdates(d))
+                EnvironmentRouter.componentsUpdates$.next(d) 
         };
 
         return EnvironmentRouter.webSocket$
@@ -74,5 +106,18 @@ export class EnvironmentRouter{
         let url = `${EnvironmentRouter.urlBase}/configuration/parameters`
         let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: EnvironmentRouter.headers })
         return createObservableFromFetch(request)
+    }
+
+    static triggerAvailableUpdates(){
+
+        let url = `${EnvironmentRouter.urlBase}/available-updates`
+        let request = new Request(url, { method: 'GET', headers: EnvironmentRouter.headers })
+        fetch(request).then()
+    }
+
+    static triggerSyncComponent(body){
+        let url = `${EnvironmentRouter.urlBase}/sync-component`
+        let request = new Request(url, { method: 'POST', body: JSON.stringify(body), headers: EnvironmentRouter.headers })
+        fetch(request).then()
     }
 }

@@ -10,6 +10,8 @@ import { userInfoView } from "./user-info.view"
 import { configParamsView } from "./config-parameters.view"
 import { Environment } from "./models"
 import { remoteGatewayInfoView } from "./remote-gateway-info.view"
+import { availableUpdatesView } from "./available-updates.view"
+import { ComponentUpdate } from "../backend/environment.router"
 
 
 
@@ -26,11 +28,12 @@ export class GeneralState {
     static configurationUpdated$ = GeneralState.webSocket$.pipe(
         filter(message => message.type == "ConfigurationUpdated")
     )
+    static componentsUpdates$ = Backend.environment.componentsUpdates$
+
 
     static configurationPaths$ = new BehaviorSubject<Array<string>>(GeneralState.getCachedConfigurationPaths())
 
-    constructor() {
-    }
+    constructor() {}
     
     static subscribe(): Subscription{
 
@@ -71,6 +74,10 @@ export class GeneralState {
 
         GeneralState.configurationPaths$.next(allPaths)
     }
+
+    syncComponent(component:ComponentUpdate){
+        Backend.environment.triggerSyncComponent({name: component.name, version: component.latestVersion})
+    }
 }
 
 
@@ -90,7 +97,7 @@ export class GeneralView implements VirtualDOM {
                 map((message) => message)
             )
         )
-        
+        Backend.environment.triggerAvailableUpdates()
         this.children = [
             {
                 class: 'flex-grow-1',
@@ -110,6 +117,10 @@ export class GeneralView implements VirtualDOM {
                     child$(
                         GeneralState.environment$,
                         (env) => remoteGatewayInfoView(env)
+                    ),
+                    child$(
+                        GeneralState.componentsUpdates$,
+                        (updates) => availableUpdatesView(state, updates)
                     )
                 ]
             },
