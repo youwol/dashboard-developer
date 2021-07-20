@@ -10,7 +10,7 @@ export enum PanelId{
     LocalEnvBacks = "local.backs",
     LocalEnvCDN = "local.cdn",
     AssetsUploadPackages = "upload.packages",
-    AssetsUploadFluxApp = "upload.fluxapp",
+    AssetsUploadFluxApps = "upload.fluxapps",
     AssetsUploadData = "upload.fluxdata",
     AssetsUploadPackage = "upload.AssetsUploadPackage",
     AssetsDownloadPackages = "download.packages",
@@ -24,7 +24,7 @@ export let tabsDisplayInfo = {
     [PanelId.LocalEnvBacks]: { title: "Back Ends", enabled: true},
     [PanelId.LocalEnvCDN]: { title: "CDN", enabled: true},
     [PanelId.AssetsUploadPackages]: { title: "Packages", enabled: true},
-    [PanelId.AssetsUploadFluxApp]: { title: "Flux app", enabled: false},
+    [PanelId.AssetsUploadFluxApps]: { title: "Flux app", enabled: true},
     [PanelId.AssetsUploadData]: { title: "Data", enabled: false},
     [PanelId.AssetsDownloadPackages]: { title: "Packages", enabled: true},
 }

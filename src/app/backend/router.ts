@@ -6,6 +6,7 @@ import { FrontsRouter } from "./front.router";
 import { LocalCdnRouter } from "./local-cdn.router";
 import { PackagesRouter } from "./packages.router";
 import { SystemRouter } from "./system.router";
+import { UploadFluxAppsRouter } from "./upload-flux-apps.router";
 import { UploadPackagesRouter } from "./upload-packages.router";
 
 export function createObservableFromFetch( request, extractFct = (d) =>d ){
@@ -46,5 +47,6 @@ export class Backend {
     static environment = EnvironmentRouter
     static uploadPackages = UploadPackagesRouter
     static downloadPackages = DownloadPackagesRouter
+    static uploadFluxApps = UploadFluxAppsRouter
     static localCdnPackages = LocalCdnRouter
 }

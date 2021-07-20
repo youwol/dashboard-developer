@@ -5,12 +5,12 @@ import { Package } from '../backend/upload-packages.router';
 import { PanelId } from '../panels-info';
 import { detailsView } from './packages/package-details-view';
 import { PackagesState,PackagesView } from './packages/packages-view';
-
+import * as FluxApps from './flux-apps/flux-apps-view'
 
 class PackagesTabData extends Tabs.TabData{
 
     constructor(public readonly packagesState: PackagesState){
-        super('packages','Packages')
+        super(PanelId.AssetsUploadPackages,'Packages')
     }
 
     view() {
@@ -33,20 +33,36 @@ class PackageTabData extends Tabs.TabData{
     }
 }
 
+class FluxAppsTabData extends Tabs.TabData{
+
+    constructor(public readonly state: FluxApps.State){
+        super(PanelId.AssetsUploadFluxApps,'Flux Apps')
+    }
+
+    view() {
+        return new FluxApps.View(this.state)
+    }
+}
+
 export class AssetsUploadState{
     
     public readonly packagesState: PackagesState
+    public readonly fluxAppsState: FluxApps.State
     
     public readonly tabsData$ : BehaviorSubject< Tabs.TabData[]>
 
-    public readonly selectedTab$ = new BehaviorSubject("packages")
+    public readonly selectedTab$ :BehaviorSubject<string> = new BehaviorSubject("packages")
 
     constructor(public readonly selectedPanel$: Subject<PanelId>){
 
         this.packagesState = new PackagesState(this)
-
+        this.fluxAppsState = new  FluxApps.State(this)
+        selectedPanel$.subscribe( (d) => {
+            this.selectedTab$.next(d) 
+        })
         this.tabsData$ = new BehaviorSubject< Tabs.TabData[]>([
-            new PackagesTabData(this.packagesState)
+            new PackagesTabData(this.packagesState),
+            new FluxAppsTabData(this.fluxAppsState)
         ])
     }
 
@@ -106,6 +122,9 @@ export class AssetsUploadView implements VirtualDOM{
 function headerViewTab(state: AssetsTabsState, tab: Tabs.State) {
 
     if(tab instanceof PackagesTabData)
+        return {innerText: tab.name, class:'px-2'}
+
+    if(tab instanceof FluxAppsTabData)
         return {innerText: tab.name, class:'px-2'}
 
     if(tab instanceof PackageTabData)

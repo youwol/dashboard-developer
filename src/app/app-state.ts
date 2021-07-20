@@ -19,7 +19,8 @@ export class AppState{
         PanelId.LocalEnvCDN
     ])
     public readonly uploadChildren$ = new BehaviorSubject([
-        PanelId.AssetsUploadPackages
+        PanelId.AssetsUploadPackages,
+        PanelId.AssetsUploadFluxApps
     ])
     public readonly downloadChildren$ = new BehaviorSubject([
         PanelId.AssetsDownloadPackages
@@ -39,7 +40,7 @@ export class AppState{
             if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks, PanelId.LocalEnvCDN].includes(selected)){
                 return new LocalView(this.localState)
             }
-            if ([PanelId.AssetsUploadPackages].includes(selected)){
+            if ([PanelId.AssetsUploadPackages, PanelId.AssetsUploadFluxApps].includes(selected)){
                 return new AssetsUploadView(this.assetsUploadState)
             }
             if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){
