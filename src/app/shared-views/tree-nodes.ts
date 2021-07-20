@@ -10,22 +10,21 @@ import { Backend } from "../backend/router"
 
 export class RootNode extends ModuleExplorer.Node{
 
+    public readonly basePath: string
     static events$ = new ReplaySubject<Interfaces.EventIO>()
-    
-    static groups$() {
-        let assetsGtwClient = new AssetsGatewayClient({basePath:`/remote/api/assets-gateway`})
+
+    static groups$(basePath:string) {
+        let assetsGtwClient = new AssetsGatewayClient({basePath})
         return assetsGtwClient.getGroups(RootNode.events$).pipe(
             map(({groups}: {groups:Array<Group>}) => {
-                return groups.map( group => new GroupNode({group}))
+                return groups.map( group => new GroupNode({group, basePath}))
             }) 
         )
     }
-    constructor({id, name}: {id: string, name: string} ){
-        super({id, name, children:RootNode.groups$(), events$: RootNode.events$  })
 
-        RootNode.events$.subscribe(d => {
-            console.log("GOT an event", d)
-        })
+    constructor({id, name, basePath}: {id: string, name: string, basePath: string} ){
+        super({id, name, children:RootNode.groups$(basePath), events$: RootNode.events$  })
+        this.basePath = basePath
     }
 }
 
@@ -33,10 +32,12 @@ export class GroupNode extends ModuleExplorer.Node{
 
     public readonly group: Group
     public readonly name: string
+    public readonly basePath: string
+
     static events$ = new ReplaySubject<Interfaces.EventIO>()
 
-    static drives$(groupId: string) {
-        let assetsGtwClient = new AssetsGatewayClient({basePath:`/remote/api/assets-gateway`})
+    static drives$(groupId: string, basePath: string) {
+        let assetsGtwClient = new AssetsGatewayClient({basePath})
         return assetsGtwClient.getDrives(groupId, GroupNode.events$).pipe(
             map(({drives}) => {
                 return drives.map( ({driveId,name}) => {
@@ -47,15 +48,16 @@ export class GroupNode extends ModuleExplorer.Node{
         )
     }
     constructor(
-        {group}: { group: Group} ){
+        {group, basePath}: { group: Group, basePath: string} ){
         super({ 
             id: group.id, 
             name:  group.path, 
-            children: GroupNode.drives$(group.id),
+            children: GroupNode.drives$(group.id, basePath),
             events$: GroupNode.events$.pipe(filter( event => event.targetId == group.id))
         })
         this.group = group
         this.name = group.path
+        this.basePath = basePath
     }
 }
 

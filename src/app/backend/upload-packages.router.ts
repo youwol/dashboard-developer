@@ -2,6 +2,7 @@ import { BehaviorSubject, combineLatest, merge, ReplaySubject, Subject } from "r
 import { map, mergeMap, scan, take, tap } from "rxjs/operators";
 import { EnvironmentRouter } from "./environment.router";
 import { createObservableFromFetch } from "./router";
+import { TreeItem } from "./shared-models";
 
 export enum StatusEnum{
 
@@ -10,14 +11,6 @@ export enum StatusEnum{
     MISMATCH = 'PackageStatus.MISMATCH',
     PROCESSING = 'PackageStatus.PROCESSING',
     DONE = 'PackageStatus.DONE'
-}
-
-export interface TreeItem{
-    name: string
-    itemId: string
-    group: string
-    borrowed: boolean
-    rawId: string
 }
 
 export interface Releases{

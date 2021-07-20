@@ -8,7 +8,7 @@ import { LogsState, LogsView } from "../logs-view"
 import { File as FileYW} from '@youwol/flux-youwol-essentials'
 import { ImmutableTree } from "@youwol/fv-tree"
 import { Interfaces, ModuleExplorer } from "@youwol/flux-files"
-import { GroupNode, RootNode } from "./tree-nodes"
+import { GroupNode, RootNode } from "../shared-views/tree-nodes"
 import { DownloadItem } from "../backend/download-packages.router"
 import { statusClassesDict } from "../assets-upload/packages/utils"
 import { StatusEnum } from "../backend/upload-packages.router"
@@ -178,7 +178,7 @@ function remoteExplorerView(state: PackagesState): VirtualDOM{
     
     let treeState = new ImmutableTree.State<ImmutableTree.Node>( {
 
-        rootNode: new RootNode({id:'root', name:'groups'}), 
+        rootNode: new RootNode({id:'root', name:'groups', basePath: `/remote/api/assets-gateway`}), 
        // expandedNodes: ['root'],
         selectedNode:state.selectedNode$
     })
