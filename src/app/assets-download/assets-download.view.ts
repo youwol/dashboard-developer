@@ -2,16 +2,16 @@ import { HTMLElement$, VirtualDOM } from '@youwol/flux-view'
 import { Tabs } from '@youwol/fv-tabs'
 import { BehaviorSubject, Subject } from 'rxjs';
 import { Package } from '../backend/upload-packages.router';
-import { PanelId } from '../panels-info';
+import { PanelId, tabsDisplayInfo } from '../panels-info';
 import { PackagesState, PackagesView } from './packages-view';
-
+import * as FluxApp from './flux-project.view'
 
 class PackageTabData extends Tabs.TabData{
 
     packagesState : PackagesState
 
     constructor(){
-        super("Packages", "Packages")
+        super(PanelId.AssetsDownloadPackages, tabsDisplayInfo[PanelId.AssetsDownloadPackages].title)
         this.packagesState = new PackagesState()
     }
 
@@ -20,18 +20,33 @@ class PackageTabData extends Tabs.TabData{
     }
 }
 
+class FluxAppsTabData extends Tabs.TabData{
+
+
+    constructor(public readonly state: FluxApp.State){
+        super(PanelId.AssetsDownloadFluxApps, tabsDisplayInfo[PanelId.AssetsDownloadFluxApps].title)
+    }
+
+    view() {
+        return new FluxApp.View(this.state)
+    }
+}
+
 
 class TabsState extends Tabs.State{
 
     constructor(state: AssetsDownloadState){
-        super([new PackageTabData()])
+        super([
+            new PackageTabData(), 
+            new FluxAppsTabData(new FluxApp.State(state))
+        ],state.selectedPanel$)
     }
 }
 
 
 export class AssetsDownloadState{
 
-    constructor(public readonly selectedPanel$: Subject<PanelId>){
+    constructor(public readonly selectedPanel$: BehaviorSubject<PanelId>){
     }
 
 }
@@ -63,7 +78,6 @@ export class AssetsDownloadView implements VirtualDOM{
 
 
 function headerViewTab(state: TabsState, tab: Tabs.TabData) {
-
 
     return {innerText: tab.name, class:'px-2'}
 }

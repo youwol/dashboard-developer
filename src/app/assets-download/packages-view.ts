@@ -162,7 +162,7 @@ export class PackagesView implements VirtualDOM{
                         child$(
                             Backend.downloadPackages.status$(),
                             () => remoteExplorerView(this.state),
-                            { untilFirst: { class: "fas fa-spinner fa-spin"} }
+                            { untilFirst: { class: "fas fa-spinner fa-spin m-auto"} }
                             ),
                         detailsView(this.state)
                     ]

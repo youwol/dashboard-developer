@@ -23,7 +23,8 @@ export class AppState{
         PanelId.AssetsUploadFluxApps
     ])
     public readonly downloadChildren$ = new BehaviorSubject([
-        PanelId.AssetsDownloadPackages
+        PanelId.AssetsDownloadPackages,
+        PanelId.AssetsDownloadFluxApps
     ])
 
 
@@ -46,7 +47,7 @@ export class AppState{
             if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){
                 return new ConfigurationView(this.configurationState)
             }
-            if ([PanelId.AssetsDownloadPackages].includes(selected)){
+            if ([PanelId.AssetsDownloadPackages, PanelId.AssetsDownloadFluxApps].includes(selected)){
                 return new AssetsDownloadView(this.assetsDownloadState) 
             }
         })

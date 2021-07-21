@@ -1,5 +1,5 @@
-import { BehaviorSubject, merge, Observable, ReplaySubject, Subject } from "rxjs";
-import { mergeMap, scan, tap } from "rxjs/operators";
+import { BehaviorSubject, combineLatest, merge, Observable, ReplaySubject, Subject } from "rxjs";
+import { map, mergeMap, scan, take, tap } from "rxjs/operators";
 import { EnvironmentRouter } from "./environment.router";
 import { createObservableFromFetch } from "./router";
 import { StatusEnum } from "./upload-packages.router";
@@ -43,7 +43,7 @@ export class DownloadItem{
 export class DownloadPackagesRouter{
 
     private static urlBase = '/admin/download/packages'
-    private static webSocket$ : Subject<any> 
+    private static webSocket$ : ReplaySubject<any> 
 
     public static groups$ = new Subject<Array<Group>>()
     static headers = {}
@@ -57,7 +57,7 @@ export class DownloadPackagesRouter{
         if(DownloadPackagesRouter.webSocket$)
             return DownloadPackagesRouter.webSocket$
 
-        DownloadPackagesRouter.webSocket$ = new Subject()
+        DownloadPackagesRouter.webSocket$ = new ReplaySubject(1)
         var ws = new WebSocket(`ws://${window.location.host}${DownloadPackagesRouter.urlBase}/ws`);
 
         EnvironmentRouter.environments$.pipe(
@@ -65,6 +65,7 @@ export class DownloadPackagesRouter{
         ).subscribe()
 
         ws.onmessage = (event) => {
+            console.log("Got data", event)
             let data = JSON.parse(event.data)
             DownloadPackagesRouter.webSocket$.next(data)        
 
@@ -90,7 +91,10 @@ export class DownloadPackagesRouter{
 
         let url = `${DownloadPackagesRouter.urlBase}/status`
         let request = new Request(url, { method: 'GET', headers: DownloadPackagesRouter.headers })
-        return createObservableFromFetch(request)
+        return DownloadPackagesRouter.webSocket$.pipe(
+            take(1),
+            mergeMap( () => createObservableFromFetch(request))
+            )
     } 
 
     static getGroups$() : Observable<Array<Group>>{

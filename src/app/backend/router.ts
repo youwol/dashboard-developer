@@ -1,5 +1,6 @@
 import { Observable } from "rxjs";
 import { BacksRouter } from "./backend.router";
+import { DownloadFluxAppsRouter } from "./download-flux-apps.router";
 import { DownloadPackagesRouter } from "./download-packages.router";
 import { EnvironmentRouter } from "./environment.router";
 import { FrontsRouter } from "./front.router";
@@ -38,6 +39,7 @@ export class Backend {
         UploadPackagesRouter.headers=headers
         DownloadPackagesRouter.headers=headers
         LocalCdnRouter.headers=headers
+        DownloadFluxAppsRouter.headers=headers
     }
     
     static system = SystemRouter
@@ -48,5 +50,6 @@ export class Backend {
     static uploadPackages = UploadPackagesRouter
     static downloadPackages = DownloadPackagesRouter
     static uploadFluxApps = UploadFluxAppsRouter
+    static downloadFluxApps = DownloadFluxAppsRouter
     static localCdnPackages = LocalCdnRouter
 }
