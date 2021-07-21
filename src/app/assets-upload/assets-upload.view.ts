@@ -5,7 +5,7 @@ import { Package } from '../backend/upload-packages.router';
 import { PanelId } from '../panels-info';
 import { detailsView } from './packages/package-details-view';
 import { PackagesState,PackagesView } from './packages/packages-view';
-import * as FluxApps from './flux-apps/flux-apps-view'
+import * as FluxApps from './flux-projects/flux-project.view'
 
 class PackagesTabData extends Tabs.TabData{
 

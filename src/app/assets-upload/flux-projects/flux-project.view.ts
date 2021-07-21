@@ -14,9 +14,6 @@ export class State{
 
     webSocket$: Subject<any> = Backend.uploadFluxApps.connectWs()
 
-    syncQueued$ = new BehaviorSubject<Set<string>>(new Set())
-    underSynchronization$ = new BehaviorSubject<Set<string>>(new Set())
-
     logsState = new LogsState(
         this.webSocket$.pipe(
             map((message) => message)
@@ -113,7 +110,7 @@ function explorerView(state: State): VirtualDOM{
         class: 'd-flex h-100 flex-column',
         children:[
             {
-                innerText: "Remote workspace"
+                innerText: "Local workspace:"
             },
             treeView
         ]
