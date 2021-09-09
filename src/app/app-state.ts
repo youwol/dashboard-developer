@@ -20,7 +20,8 @@ export class AppState{
     ])
     public readonly uploadChildren$ = new BehaviorSubject([
         PanelId.AssetsUploadPackages,
-        PanelId.AssetsUploadFluxApps
+        PanelId.AssetsUploadFluxApps,
+        PanelId.AssetsUploadData
     ])
     public readonly downloadChildren$ = new BehaviorSubject([
         PanelId.AssetsDownloadPackages,
@@ -41,7 +42,7 @@ export class AppState{
             if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks, PanelId.LocalEnvCDN].includes(selected)){
                 return new LocalView(this.localState)
             }
-            if ([PanelId.AssetsUploadPackages, PanelId.AssetsUploadFluxApps].includes(selected)){
+            if ([PanelId.AssetsUploadPackages, PanelId.AssetsUploadFluxApps, PanelId.AssetsUploadData].includes(selected)){
                 return new AssetsUploadView(this.assetsUploadState)
             }
             if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){

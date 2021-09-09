@@ -7,6 +7,7 @@ import { FrontsRouter } from "./front.router";
 import { LocalCdnRouter } from "./local-cdn.router";
 import { PackagesRouter } from "./packages.router";
 import { SystemRouter } from "./system.router";
+import { UploadDataRouter } from "./upload-data.router";
 import { UploadFluxAppsRouter } from "./upload-flux-apps.router";
 import { UploadPackagesRouter } from "./upload-packages.router";
 
@@ -37,6 +38,8 @@ export class Backend {
         PackagesRouter.headers=headers
         EnvironmentRouter.headers=headers
         UploadPackagesRouter.headers=headers
+        UploadFluxAppsRouter.headers=headers
+        UploadDataRouter.headers=headers
         DownloadPackagesRouter.headers=headers
         LocalCdnRouter.headers=headers
         DownloadFluxAppsRouter.headers=headers
@@ -50,6 +53,7 @@ export class Backend {
     static uploadPackages = UploadPackagesRouter
     static downloadPackages = DownloadPackagesRouter
     static uploadFluxApps = UploadFluxAppsRouter
+    static uploadData = UploadDataRouter
     static downloadFluxApps = DownloadFluxAppsRouter
     static localCdnPackages = LocalCdnRouter
 }

@@ -6,6 +6,7 @@ import { PanelId } from '../panels-info';
 import { detailsView } from './packages/package-details-view';
 import { PackagesState,PackagesView } from './packages/packages-view';
 import * as FluxApps from './flux-projects/flux-project.view'
+import * as DataAsset from './data/data-upload.view'
 
 class PackagesTabData extends Tabs.TabData{
 
@@ -44,10 +45,23 @@ class FluxAppsTabData extends Tabs.TabData{
     }
 }
 
+class DataAssetTabData extends Tabs.TabData{
+
+    constructor(public readonly state: DataAsset.State){
+        super(PanelId.AssetsUploadData,'Data')
+    }
+
+    view() {
+        return new DataAsset.View(this.state)
+    }
+}
+
+
 export class AssetsUploadState{
     
     public readonly packagesState: PackagesState
     public readonly fluxAppsState: FluxApps.State
+    public readonly dataAssetState: DataAsset.State
     
     public readonly tabsData$ : BehaviorSubject< Tabs.TabData[]>
 
@@ -57,12 +71,15 @@ export class AssetsUploadState{
 
         this.packagesState = new PackagesState(this)
         this.fluxAppsState = new  FluxApps.State(this)
+        this.dataAssetState = new  DataAsset.State(this)
+
         selectedPanel$.subscribe( (d) => {
             this.selectedTab$.next(d) 
         })
         this.tabsData$ = new BehaviorSubject< Tabs.TabData[]>([
             new PackagesTabData(this.packagesState),
-            new FluxAppsTabData(this.fluxAppsState)
+            new FluxAppsTabData(this.fluxAppsState),
+            new DataAssetTabData(this.dataAssetState)
         ])
     }
 
@@ -125,6 +142,9 @@ function headerViewTab(state: AssetsTabsState, tab: Tabs.State) {
         return {innerText: tab.name, class:'px-2'}
 
     if(tab instanceof FluxAppsTabData)
+        return {innerText: tab.name, class:'px-2'}
+
+    if(tab instanceof DataAssetTabData)
         return {innerText: tab.name, class:'px-2'}
 
     if(tab instanceof PackageTabData)

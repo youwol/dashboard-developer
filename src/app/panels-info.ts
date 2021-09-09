@@ -12,7 +12,7 @@ export enum PanelId{
     AssetsUploadPackages = "upload.packages",
     AssetsUploadFluxApps = "upload.fluxapps",
     AssetsDownloadFluxApps = "download.fluxapps",
-    AssetsUploadData = "upload.fluxdata",
+    AssetsUploadData = "upload.data",
     AssetsUploadPackage = "upload.AssetsUploadPackage",
     AssetsDownloadPackages = "download.packages",
 }
@@ -26,8 +26,9 @@ export let tabsDisplayInfo = {
     [PanelId.LocalEnvCDN]: { title: "CDN", enabled: true},
     [PanelId.AssetsUploadPackages]: { title: "Packages", enabled: true},
     [PanelId.AssetsUploadFluxApps]: { title: "Flux apps", enabled: true},
+    [PanelId.AssetsUploadData]: { title: "Data", enabled: true},
     [PanelId.AssetsDownloadFluxApps]: { title: "Flux apps", enabled: true},
-    [PanelId.AssetsUploadData]: { title: "Data", enabled: false},
+    [PanelId.AssetsUploadData]: { title: "Data", enabled: true},
     [PanelId.AssetsDownloadPackages]: { title: "Packages", enabled: true},
 }
 
