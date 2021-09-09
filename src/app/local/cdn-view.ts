@@ -1,14 +1,18 @@
 import { VirtualDOM, child$, HTMLElement$ } from '@youwol/flux-view'
-import { ReplaySubject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 import { PackagesStatus, Package, PackageDetails, VersionDetails } from '../backend/local-cdn.router';
 import { Backend } from '../backend/router';
+import { filesBrowserView } from '../shared-views/files-browser.view';
 import { innerTabClasses } from "../utils-view";
+import * as _ from 'lodash'
 
 
 export class CdnState {
 
     packagesStatus$ = Backend.localCdnPackages.packagesStatus$
     packageDetails$ = Backend.localCdnPackages.packageDetails$
+    selectedPackageVersion$ = new BehaviorSubject<VersionDetails>(undefined)
+    
     webSocket$: ReplaySubject<any>
     constructor() {
         this.webSocket$ = Backend.localCdnPackages.connectWs()
@@ -26,6 +30,10 @@ export class CdnState {
         Backend.localCdnPackages.getPackageDetails$(name).subscribe()
     }
 
+    selectPackageVersion(versionInfo: VersionDetails){
+        this.selectedPackageVersion$.next(versionInfo)
+    }
+
 }
 
 export class CdnView implements VirtualDOM {
@@ -41,23 +49,32 @@ export class CdnView implements VirtualDOM {
 
         this.state = state
 
-        //let logsState = new LogsState(this.state.webSocket$)
-
         this.children = [
             {
-                class: 'd-flex h-100',
+                class: 'd-flex h-100 justify-content-around',
                 children: [
                     child$(
                         this.state.packagesStatus$,
                         (status) => this.packagesTable(status)
                     ),
-                    child$(
-                        this.state.packageDetails$,
-                        (details) => details ? this.packageDetails(details) : {}
-                    )
+                    {
+                        class: 'd-flex flex-column h-100 px-2',
+                        style:{ maxWidth: '50%'},
+                        children:[
+                            child$(
+                                this.state.packageDetails$,
+                                (details) => details ? this.packageDetails(details) : {}
+                            ),
+                            child$(
+                                this.state.selectedPackageVersion$,
+                                (versionDetail) => {
+                                    return versionDetail ? this.packageBrowserView(versionDetail) : {}
+                                }
+                            )
+                        ]
+                    }
                 ]
             }
-            //new LogsView(logsState)
         ]
 
         this.connectedCallback = (elem: HTMLElement$) => {
@@ -101,7 +118,10 @@ export class CdnView implements VirtualDOM {
                                             latestVersionCell(library),
                                             deletePackageCell(library.name)
                                         ],
-                                        onclick: () => this.state.getPackageDetails(library.name)
+                                        onclick: () => {
+                                            this.state.getPackageDetails(library.name) 
+                                            this.state.selectPackageVersion(undefined)
+                                        }
                                     }
                                 })
                         }
@@ -114,7 +134,10 @@ export class CdnView implements VirtualDOM {
     packageDetails(pack: PackageDetails): VirtualDOM {
 
         return {
-            class: 'overflow-auto h-100 mx-auto',
+            class: 'overflow-auto',
+            style: {
+                maxHeight:'50%',
+            },
             children: [
                 {   tag:'h4',
                     class: 'fv-text-focus',
@@ -145,6 +168,7 @@ export class CdnView implements VirtualDOM {
                                     return {
                                         tag: 'tr',
                                         class: 'fv-hover-bg-background-alt',
+                                        onclick: () => this.state.selectPackageVersion(packVersion),
                                         children: [
                                             { tag: 'td', innerText: packVersion.version, class: 'px-2' },
                                             { tag: 'td', innerText: packVersion.filesCount, class: 'px-2' },
@@ -160,6 +184,29 @@ export class CdnView implements VirtualDOM {
         }
     }
 
+    packageBrowserView(versionInfo: VersionDetails): VirtualDOM{
+        
+        let pattern = versionInfo.namespace == ""
+            ? `/libraries/${versionInfo.name}`
+            : `/libraries/${versionInfo.namespace}/${versionInfo.name}`
+
+        let index = versionInfo.path.join('/').split(pattern)[0].split('/').length - 2
+
+        let view = filesBrowserView({
+            startingFolder: versionInfo.path, 
+            originFolderIndex: index
+        })
+        return {
+            class:'w-100 py-2 flex-grow-1',
+            children:[
+                {   tag:'h4',
+                    class: 'fv-text-focus',
+                    innerText: 'Browser'
+                },
+                view
+            ]
+        }
+    }
 }
 
 

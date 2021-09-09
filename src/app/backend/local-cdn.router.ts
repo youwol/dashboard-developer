@@ -23,6 +23,8 @@ export interface VersionDetails{
     versionNumber: number
     filesCount: number
     bundleSize: number
+    path: Array<string>
+    namespace: string
 }
 
 export interface PackageDetails{
