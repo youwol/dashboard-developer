@@ -6,10 +6,10 @@ import { ConfigurationState, ConfigurationView } from "./environment/environment
 import { LocalState, LocalView } from "./local/local-view"
 import { PanelId, tabsDisplayInfo } from "./panels-info"
 
-export class AppState{
+export class AppState {
 
     public readonly environmentChildren$ = new BehaviorSubject([
-        PanelId.ConfigurationGeneral, 
+        PanelId.ConfigurationGeneral,
         PanelId.ConfigurationRawFile
     ])
     public readonly localChildren$ = new BehaviorSubject([
@@ -21,7 +21,7 @@ export class AppState{
     public readonly uploadChildren$ = new BehaviorSubject([
         PanelId.AssetsUploadPackages,
         PanelId.AssetsUploadFluxApps,
-        PanelId.AssetsUploadData
+        PanelId.AssetsUploadData,
         PanelId.AssetsUploadStories
     ])
     public readonly downloadChildren$ = new BehaviorSubject([
@@ -38,30 +38,30 @@ export class AppState{
     configurationState = new ConfigurationState(this.selected$)
 
     panelViewFactory$ = this.selected$.pipe(
-        map( selected => {
-    
-            if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks, PanelId.LocalEnvCDN].includes(selected)){
+        map(selected => {
+
+            if ([PanelId.LocalEnvPackage, PanelId.LocalEnvFronts, PanelId.LocalEnvBacks, PanelId.LocalEnvCDN].includes(selected)) {
                 return new LocalView(this.localState)
             }
             if ([PanelId.AssetsUploadPackages, PanelId.AssetsUploadFluxApps, PanelId.AssetsUploadData, PanelId.AssetsUploadStories].includes(selected)) {
                 return new AssetsUploadView(this.assetsUploadState)
             }
-            if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)){
+            if ([PanelId.ConfigurationGeneral, PanelId.ConfigurationRawFile].includes(selected)) {
                 return new ConfigurationView(this.configurationState)
             }
-            if ([PanelId.AssetsDownloadPackages, PanelId.AssetsDownloadFluxApps].includes(selected)){
-                return new AssetsDownloadView(this.assetsDownloadState) 
+            if ([PanelId.AssetsDownloadPackages, PanelId.AssetsDownloadFluxApps].includes(selected)) {
+                return new AssetsDownloadView(this.assetsDownloadState)
             }
         })
     )
 
-    constructor(){
+    constructor() {
 
     }
 
-    addTabUpload( name: string ) {
+    addTabUpload(name: string) {
         let actualTabs = this.uploadChildren$.getValue()
-        tabsDisplayInfo[ PanelId.AssetsUploadPackage] = { title: name, enabled: true}
+        tabsDisplayInfo[PanelId.AssetsUploadPackage] = { title: name, enabled: true }
         this.uploadChildren$.next([...actualTabs, PanelId.AssetsUploadPackage])
     }
 }

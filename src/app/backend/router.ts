@@ -10,17 +10,18 @@ import { SystemRouter } from "./system.router";
 import { UploadDataRouter } from "./upload-data.router";
 import { UploadFluxAppsRouter } from "./upload-flux-apps.router";
 import { UploadPackagesRouter } from "./upload-packages.router";
+import { UploadStoriesRouter } from "./upload-stories.router";
 
-export function createObservableFromFetch( request, extractFct = (d) =>d ){
+export function createObservableFromFetch(request, extractFct = (d) => d) {
 
     return new Observable(observer => {
         fetch(request)
-          .then(response => response.json()) // or text() or blob() etc.
-          .then(data => {
-            observer.next( extractFct(data));
-            observer.complete();
-          })
-          .catch(err => observer.error(err)); 
+            .then(response => response.json()) // or text() or blob() etc.
+            .then(data => {
+                observer.next(extractFct(data));
+                observer.complete();
+            })
+            .catch(err => observer.error(err));
     });
 }
 
@@ -28,28 +29,28 @@ export class Backend {
 
     static urlBase = '/admin'
 
-    static headers : {[key:string]: string}= {}
+    static headers: { [key: string]: string } = {}
 
-    static setHeaders(headers: {[key:string]:string}){
-        Backend.headers=headers
-        BacksRouter.headers=headers
-        SystemRouter.headers=headers
-        FrontsRouter.headers=headers
-        PackagesRouter.headers=headers
-        EnvironmentRouter.headers=headers
-        UploadPackagesRouter.headers=headers
-        UploadFluxAppsRouter.headers=headers
-        UploadDataRouter.headers=headers
-        DownloadPackagesRouter.headers=headers
-        LocalCdnRouter.headers=headers
-        DownloadFluxAppsRouter.headers=headers
+    static setHeaders(headers: { [key: string]: string }) {
+        Backend.headers = headers
+        BacksRouter.headers = headers
+        SystemRouter.headers = headers
+        FrontsRouter.headers = headers
+        PackagesRouter.headers = headers
+        EnvironmentRouter.headers = headers
+        UploadPackagesRouter.headers = headers
+        UploadFluxAppsRouter.headers = headers
+        UploadDataRouter.headers = headers
+        DownloadPackagesRouter.headers = headers
+        LocalCdnRouter.headers = headers
+        DownloadFluxAppsRouter.headers = headers
         UploadStoriesRouter.headers = headers
     }
-    
+
     static system = SystemRouter
-    static fronts = FrontsRouter 
-    static backs = BacksRouter 
-    static modules = PackagesRouter 
+    static fronts = FrontsRouter
+    static backs = BacksRouter
+    static modules = PackagesRouter
     static environment = EnvironmentRouter
     static uploadPackages = UploadPackagesRouter
     static downloadPackages = DownloadPackagesRouter
@@ -57,4 +58,5 @@ export class Backend {
     static uploadData = UploadDataRouter
     static downloadFluxApps = DownloadFluxAppsRouter
     static localCdnPackages = LocalCdnRouter
+    static uploadStory = UploadStoriesRouter
 }

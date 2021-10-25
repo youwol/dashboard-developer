@@ -4,7 +4,7 @@ import { createObservableFromFetch } from "./router"
 import { TreeItem } from "./shared-models"
 
 
-export enum StatusEnum{
+export enum StatusEnum {
 
     NOT_FOUND = 'FluxAppStatus.NOT_FOUND',
     SYNC = 'FluxAppStatus.SYNC',
@@ -14,64 +14,64 @@ export enum StatusEnum{
 }
 
 export class FluxAppStatus {
-    constructor() {}
+    constructor() { }
 }
 
-export class ResolvedFluxApps extends FluxAppStatus{
+export class ResolvedFluxApps extends FluxAppStatus {
 
     fluxStatus: StatusEnum
     treeStatus: StatusEnum
     assetStatus: StatusEnum
 
-    constructor({fluxStatus, treeStatus, assetStatus}) {
+    constructor({ fluxStatus, treeStatus, assetStatus }) {
         super()
         this.fluxStatus = fluxStatus
         this.treeStatus = treeStatus
         this.assetStatus = assetStatus
     }
 }
-export class ProcessingFluxApps extends FluxAppStatus{
+export class ProcessingFluxApps extends FluxAppStatus {
 }
 
-export class FluxApp{
+export class FluxApp {
 
     assetId: string
     rawId: string
     name: string
-    treeItems : Array<TreeItem>
+    treeItems: Array<TreeItem>
     status: FluxAppStatus
-    
+
     constructor({
         assetId,
         name,
         treeItems,
         status
-    }){
+    }) {
         this.assetId = assetId
         this.name = name
         this.treeItems = treeItems
-        this.status = ( typeof(status) == 'string' )
+        this.status = (typeof (status) == 'string')
             ? new ProcessingFluxApps()
             : new ResolvedFluxApps(status)
-            
+
     }
 }
 
 
-export class UploadFluxAppsRouter{
+export class UploadFluxAppsRouter {
 
     private static urlBase = '/admin/upload/flux-apps'
-    private static webSocket$ : Subject<any> 
+    private static webSocket$: Subject<any>
 
     static headers = {}
 
-    static fluxApps$ = new BehaviorSubject<{[key:string]: FluxApp}>({})
+    static fluxApps$ = new BehaviorSubject<{ [key: string]: FluxApp }>({})
     static package$ = new ReplaySubject<FluxApp>(1)
 
 
-    static connectWs(){
+    static connectWs() {
 
-        if(UploadFluxAppsRouter.webSocket$)
+        if (UploadFluxAppsRouter.webSocket$)
             return UploadFluxAppsRouter.webSocket$
 
         UploadFluxAppsRouter.webSocket$ = new Subject()
@@ -81,21 +81,21 @@ export class UploadFluxAppsRouter{
             let data = JSON.parse(event.data)
 
             UploadFluxAppsRouter.webSocket$.next(data)
-            if(data.target && data.target == 'flux-app') 
+            if (data.target && data.target == 'flux-app')
                 UploadFluxAppsRouter.package$.next(new FluxApp(data))
-            
+
         };
 
         this.package$.pipe(
-            scan( (acc, e) => {
-                if(e==undefined)
+            scan((acc, e) => {
+                if (e == undefined)
                     return {}
-                return {...acc, ...{[e.assetId]: e} }
+                return { ...acc, ...{ [e.assetId]: e } }
             }, {})
-        ).subscribe( (state) => {
+        ).subscribe((state) => {
             this.fluxApps$.next(state)
         })
-        
+
         return UploadFluxAppsRouter.webSocket$
     }
 
@@ -107,10 +107,10 @@ export class UploadFluxAppsRouter{
             UploadFluxAppsRouter.webSocket$.pipe(take(1)),
             createObservableFromFetch(request)
         ]).pipe(
-            map( ([_,status])  => status )
+            map(([_, status]) => status)
         )
         return status$
-    } 
+    }
     /*
     static path$(treeId: string) {
 

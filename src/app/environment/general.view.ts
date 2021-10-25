@@ -19,7 +19,7 @@ export class GeneralState {
 
     static webSocket$: ReplaySubject<any> = Backend.environment.connectWs()
 
-    static environment$ : Observable<Environment> = GeneralState.webSocket$.pipe(
+    static environment$: Observable<Environment> = GeneralState.webSocket$.pipe(
         filter(message => message.type == "Environment")
     )
     static loadingStatus$ = GeneralState.webSocket$.pipe(
@@ -33,9 +33,9 @@ export class GeneralState {
 
     static configurationPaths$ = new BehaviorSubject<Array<string>>(GeneralState.getCachedConfigurationPaths())
 
-    constructor() {}
-    
-    static subscribe(): Subscription{
+    constructor() { }
+
+    static subscribe(): Subscription {
 
         return GeneralState.webSocket$.pipe(
             take(1),
@@ -75,8 +75,8 @@ export class GeneralState {
         GeneralState.configurationPaths$.next(allPaths)
     }
 
-    syncComponent(component:ComponentUpdate){
-        Backend.environment.triggerSyncComponent({name: component.name, version: component.latestVersion})
+    syncComponent(component: ComponentUpdate) {
+        Backend.environment.triggerSyncComponent({ name: component.name, version: component.latestVersion })
     }
 }
 
