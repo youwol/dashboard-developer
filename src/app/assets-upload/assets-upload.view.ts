@@ -45,10 +45,22 @@ class FluxAppsTabData extends Tabs.TabData{
     }
 }
 
-class DataAssetTabData extends Tabs.TabData{
+class StoryTabData extends Tabs.TabData {
 
-    constructor(public readonly state: DataAsset.State){
-        super(PanelId.AssetsUploadData,'Data')
+    constructor(public readonly state: Story.State) {
+        super(PanelId.AssetsUploadStories, 'Stories')
+    }
+
+    view() {
+        return new Story.View(this.state)
+    }
+}
+
+
+class DataAssetTabData extends Tabs.TabData {
+
+    constructor(public readonly state: DataAsset.State) {
+        super(PanelId.AssetsUploadData, 'Data')
     }
 
     view() {
@@ -72,6 +84,7 @@ export class AssetsUploadState{
         this.packagesState = new PackagesState(this)
         this.fluxAppsState = new  FluxApps.State(this)
         this.dataAssetState = new  DataAsset.State(this)
+        this.storiesState = new Story.State(this)
 
         selectedPanel$.subscribe( (d) => {
             this.selectedTab$.next(d) 
@@ -79,6 +92,7 @@ export class AssetsUploadState{
         this.tabsData$ = new BehaviorSubject< Tabs.TabData[]>([
             new PackagesTabData(this.packagesState),
             new FluxAppsTabData(this.fluxAppsState),
+            new StoryTabData(this.storiesState),
             new DataAssetTabData(this.dataAssetState)
         ])
     }
@@ -147,7 +161,11 @@ function headerViewTab(state: AssetsTabsState, tab: Tabs.State) {
     if(tab instanceof DataAssetTabData)
         return {innerText: tab.name, class:'px-2'}
 
-    if(tab instanceof PackageTabData)
+    if (tab instanceof StoryTabData)
+        return { innerText: tab.name, class: 'px-2' }
+
+
+    if (tab instanceof PackageTabData)
         return {
             class: 'd-flex align-items-center px-2',
             children:[

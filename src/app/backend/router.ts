@@ -43,6 +43,7 @@ export class Backend {
         DownloadPackagesRouter.headers=headers
         LocalCdnRouter.headers=headers
         DownloadFluxAppsRouter.headers=headers
+        UploadStoriesRouter.headers = headers
     }
     
     static system = SystemRouter
